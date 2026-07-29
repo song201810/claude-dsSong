@@ -13,6 +13,7 @@ export default function MessageBubble({ message, isStreaming }: Props) {
   const isUser = message.role === 'user'
   const isEmpty = !message.content
   const showLoading = !isUser && isEmpty && isStreaming
+  const [thinkingExpanded, setThinkingExpanded] = useState(false)
 
   const content = message.content
 

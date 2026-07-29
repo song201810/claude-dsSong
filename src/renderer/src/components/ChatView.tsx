@@ -34,7 +34,7 @@ export default function ChatView() {
   return (
     <div className="flex-1 overflow-y-auto py-4">
       {state.messages.map((msg) => (
-        <MessageBubble key={msg.id} message={msg} />
+        <MessageBubble key={msg.id} message={msg} isStreaming={state.isStreaming} />
       ))}
 
       {state.error && (
