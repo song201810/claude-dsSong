@@ -12,7 +12,7 @@ function ErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => voi
 
   return (
     <div
-      className={`mx-4 mb-4 px-4 py-3 rounded-lg bg-red-900/40 border border-red-700/60
+      className={`mx-4 mb-4 px-4 py-3 rounded-xl bg-red-950/40 border border-red-800/50
                   text-red-200 text-sm flex items-start gap-3 transition-all duration-300
                   ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
     >
@@ -42,24 +42,24 @@ export default function ChatView() {
       <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
         <div className="relative mb-6">
           <div className="text-6xl">🤖</div>
-          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-400 animate-pulse" />
+          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#f0836a] animate-pulse shadow-lg shadow-[#f0836a]/30" />
         </div>
-        <h2 className="text-xl font-semibold mb-2">开始对话</h2>
-        <p className="text-gray-400 text-sm max-w-md">
+        <h2 className="text-xl font-semibold mb-2 text-[#faf7f2]">开始对话</h2>
+        <p className="text-[#a8a29e] text-sm max-w-md">
           在下方输入你的问题，Claude 将为你提供帮助。
         </p>
         <div className="mt-8 grid grid-cols-3 gap-4 max-w-lg w-full">
-          <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[#1a1b1e]/60">
-            <kbd className="px-2.5 py-1 text-xs bg-[#313338] rounded font-mono">Enter</kbd>
-            <span className="text-xs text-gray-500">发送消息</span>
+          <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[#231f1d] border border-[#3a3430]">
+            <kbd className="px-2.5 py-1 text-xs bg-[#332e2b] rounded-md font-mono text-[#d6cbc4]">Enter</kbd>
+            <span className="text-xs text-[#6b6560]">发送消息</span>
           </div>
-          <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[#1a1b1e]/60">
-            <kbd className="px-2.5 py-1 text-xs bg-[#313338] rounded font-mono">Shift + Enter</kbd>
-            <span className="text-xs text-gray-500">换行</span>
+          <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[#231f1d] border border-[#3a3430]">
+            <kbd className="px-2.5 py-1 text-xs bg-[#332e2b] rounded-md font-mono text-[#d6cbc4]">Shift + Enter</kbd>
+            <span className="text-xs text-[#6b6560]">换行</span>
           </div>
-          <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[#1a1b1e]/60">
-            <kbd className="px-2.5 py-1 text-xs bg-[#313338] rounded font-mono">Esc</kbd>
-            <span className="text-xs text-gray-500">取消生成</span>
+          <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[#231f1d] border border-[#3a3430]">
+            <kbd className="px-2.5 py-1 text-xs bg-[#332e2b] rounded-md font-mono text-[#d6cbc4]">Esc</kbd>
+            <span className="text-xs text-[#6b6560]">取消生成</span>
           </div>
         </div>
       </div>

@@ -12,9 +12,9 @@ interface Props {
 function TypingDots() {
   return (
     <div className="flex items-center gap-1 py-1">
-      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+      <span className="w-2 h-2 rounded-full bg-[#a8a29e] animate-bounce" style={{ animationDelay: '0ms' }} />
+      <span className="w-2 h-2 rounded-full bg-[#a8a29e] animate-bounce" style={{ animationDelay: '150ms' }} />
+      <span className="w-2 h-2 rounded-full bg-[#a8a29e] animate-bounce" style={{ animationDelay: '300ms' }} />
     </div>
   )
 }
@@ -30,14 +30,14 @@ export default function MessageBubble({ message, isStreaming }: Props) {
       <div
         className={`max-w-[85%] rounded-2xl px-4 py-3 ${
           isUser
-            ? 'bg-[#2b3b52] text-white rounded-br-md'
-            : 'bg-[#2d2f34] text-gray-100 rounded-bl-md'
+            ? 'bg-[#e0684e] text-white rounded-br-md shadow-sm'
+            : 'bg-[#292524] text-[#d6cbc4] rounded-bl-md'
         }`}
       >
         {message.thinking && (
           <div className="mb-2">
             <button
-              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-300
+              className="flex items-center gap-1.5 text-xs text-[#a8a29e] hover:text-[#d6cbc4]
                          transition-colors mb-1"
               onClick={() => setThinkingExpanded(!thinkingExpanded)}
             >
@@ -45,19 +45,20 @@ export default function MessageBubble({ message, isStreaming }: Props) {
               <span>思考过程</span>
             </button>
             {thinkingExpanded && (
-              <div className="text-xs text-gray-400 bg-black/20 rounded-lg px-3 py-2
-                              border-l-2 border-gray-500 italic whitespace-pre-wrap">
+              <div className="text-xs text-[#a8a29e] bg-[#1c1917]/40 rounded-lg px-3 py-2
+                              border-l-2 border-[#f0836a] italic whitespace-pre-wrap">
                 {message.thinking}
               </div>
             )}
           </div>
         )}
 
-        {/* Three-state rendering: empty → loading dots; partial → content + cursor; done → content */}
         {showLoading ? (
           <TypingDots />
         ) : (
-          <div className="prose prose-invert prose-sm max-w-none break-words overflow-x-auto">
+          <div className="prose prose-invert prose-sm max-w-none break-words overflow-x-auto
+                          prose-headings:text-[#faf7f2] prose-a:text-[#f0836a]
+                          prose-strong:text-[#faf7f2]">
             <ReactMarkdown
               components={{
                 code({ className, children, ...props }) {
@@ -66,7 +67,7 @@ export default function MessageBubble({ message, isStreaming }: Props) {
                   const isInline = !match && !codeStr.includes('\n')
                   if (isInline) {
                     return (
-                      <code className="bg-black/30 rounded px-1.5 py-0.5 text-xs" {...props}>
+                      <code className="bg-[#1c1917]/50 rounded px-1.5 py-0.5 text-xs text-[#f0836a]" {...props}>
                         {children}
                       </code>
                     )
@@ -80,9 +81,8 @@ export default function MessageBubble({ message, isStreaming }: Props) {
             >
               {isEmpty ? '' : message.content}
             </ReactMarkdown>
-            {/* Streaming cursor: only show while actively receiving tokens */}
             {(isStreaming || isEmpty) && !showLoading && (
-              <span className="inline-block w-2 h-4 bg-gray-300 ml-0.5 animate-pulse align-text-bottom" />
+              <span className="inline-block w-2 h-4 bg-[#f0836a] ml-0.5 animate-pulse align-text-bottom rounded-sm" />
             )}
           </div>
         )}

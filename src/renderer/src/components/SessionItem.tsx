@@ -29,16 +29,18 @@ export default function SessionItem({ session, isActive, onSelect, onDelete }: P
   return (
     <div
       className={`
-        group flex flex-col px-3 py-2.5 cursor-pointer border-b border-gray-700/50
-        transition-colors duration-100
-        ${isActive ? 'bg-[#3a3b3f]' : 'hover:bg-[#2c2d30]'}
+        group flex flex-col px-3 py-2.5 cursor-pointer border-b border-[#3a3430]/50
+        transition-colors duration-150
+        ${isActive ? 'bg-[#44403c]' : 'hover:bg-[#383230]'}
       `}
       onClick={() => onSelect(session.id)}
     >
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium truncate">{session.name}</span>
+        <span className={`text-sm font-medium truncate ${isActive ? 'text-[#faf7f2]' : 'text-[#d6cbc4]'}`}>
+          {session.name}
+        </span>
         <button
-          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400
+          className="opacity-0 group-hover:opacity-100 text-[#6b6560] hover:text-[#f0836a]
                      text-xs px-1 py-0.5 rounded transition-all"
           onClick={handleDelete}
           title="删除会话"
@@ -46,7 +48,7 @@ export default function SessionItem({ session, isActive, onSelect, onDelete }: P
           ✕
         </button>
       </div>
-      <span className="text-xs text-gray-500 mt-0.5">
+      <span className="text-xs text-[#6b6560] mt-0.5">
         {session.messageCount} 条消息 · {formatDate(session.updatedAt)}
       </span>
     </div>

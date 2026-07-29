@@ -16,19 +16,19 @@ export default function CodeBlock({ language, code }: Props) {
   }
 
   return (
-    <div className="my-3 rounded-lg overflow-hidden border border-gray-700">
-      <div className="flex items-center justify-between px-3 py-1.5 bg-gray-800/80">
-        <span className="text-xs text-gray-400">{language || 'code'}</span>
+    <div className="my-3 rounded-xl overflow-hidden border border-[#3a3430]">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#332e2b]">
+        <span className="text-xs text-[#a8a29e] font-mono">{language || 'code'}</span>
         <button
-          className="text-xs px-2 py-0.5 rounded hover:bg-gray-700 transition-colors
-                     text-gray-400 hover:text-white"
+          className="text-xs px-2 py-0.5 rounded-md hover:bg-[#44403c] transition-colors
+                     text-[#a8a29e] hover:text-[#faf7f2]"
           onClick={handleCopy}
         >
           {copied ? '已复制 ✓' : '复制'}
         </button>
       </div>
-      <pre className="px-3 py-2.5 text-sm overflow-x-auto bg-gray-900/50 font-mono
-                       leading-relaxed text-gray-200">
+      <pre className="px-3 py-2.5 text-sm overflow-x-auto bg-[#1e1b19] font-mono
+                       leading-relaxed text-[#d6cbc4]">
         <code>{code}</code>
       </pre>
     </div>
