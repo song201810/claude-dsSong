@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-参考 claude-libre 设计思路，重新实现一个 Claude Code CLI 的桌面 GUI 客户端。免费、开源，通过 `node-pty` 管理本地 `claude` CLI 进程进行通信。
+实现一个 Claude Code CLI 的桌面 GUI 客户端。免费、开源，通过 `node-pty` 管理本地 `claude` CLI 进程进行通信。
 
 ## 技术栈
 
@@ -65,18 +65,8 @@ src/
 - `config:*` — 配置读取 (get-models/get-settings/update-settings)
 - `app:*` — 应用级操作 (get-app-info/open-external)
 
-## 放弃的功能 (有意为之)
-
-- 终端集成 (xterm.js) — MVP 只需聊天界面
-- 代码 Diff 查看 — 需要 Monaco, 非核心
-- @file 引用 GUI — CLI 层面支持
-- 国际化 — 先做中文
-- 主题切换 — 先做暗色
-- 权限拦截 — pty 层自动 Allow
-
 ## 参考项目
 
-- [claude-libre](https://github.com/HenryMu/claude-libre): 提供架构参考 (Electron + React + node-pty + chokidar), 但本项目不直接复制其代码。
 - Claude Code CLI 文档: https://docs.anthropic.com/en/docs/claude-code
 
 ## 测试要求
@@ -101,3 +91,9 @@ src/
 - IPC 通信: 统一通过 preload 暴露的 `window.api` 对象
 - 文件命名: kebab-case
 - 组件文件: PascalCase.tsx
+
+## AI 协作纪律
+
+- **禁止重复构建验证**：修改代码后只跑一次 `npx tsc --noEmit` + `npx electron-vite build` 确认编译通过。如果 git status 无变化且上次构建已通过，不要再重复构建。不要在无新增改动的情况下多次 commit "chore" "noop" 等空提交
+- **禁止死循环**：当一个操作连续执行多次且结果完全相同时（如连续 build 结果一致、连续 git status 显示 clean），立即停止，问用户下一步做什么
+- **变更完成后直接 commit**：一次改动 → 一次构建 → 一次 commit。不要拆成多个小 commit 反复跑
