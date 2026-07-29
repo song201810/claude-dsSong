@@ -2,7 +2,7 @@
 
 /* ============ Font stack ============ */
 html, body {
-  font-family: 'DM Sans', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   font-weight: 400;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -11,7 +11,7 @@ html, body {
 
 /* Prose / message content */
 .prose {
-  font-family: 'DM Sans', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   line-height: 1.65;
 }
 
@@ -22,7 +22,7 @@ pre, code, kbd, .font-mono {
 
 /* Headings */
 h1, h2, h3, h4 {
-  font-family: 'DM Sans', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
