@@ -122,7 +122,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const loadSessions = useCallback(async () => {
     const sessions = await window.api.listSessions()
-    console.log('[AppContext] loadSessions, count:', sessions.length)
     dispatch({ type: 'SET_SESSIONS', payload: sessions })
   }, [])
 
@@ -193,27 +192,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // --- IPC listeners (registered once, uses stateRef to avoid stale closures) ---
   useEffect(() => {
     const c1 = window.api.onChatToken((data) => {
-      console.log('[AppContext] TOKEN len', data.token.length)
       dispatch({ type: 'APPEND_TOKEN', payload: { token: data.token, thinking: data.thinking } })
     })
     const c2 = window.api.onChatError((data) => {
-      console.log('[AppContext] ERROR', data.error)
       dispatch({ type: 'SET_ERROR', payload: data.error })
     })
     const c3 = window.api.onChatDone(async (data) => {
       const cur = stateRef.current
-      // Use the messageId from the main process — it's the assistant message ID
-      // that was sent in START_STREAMING. This is reliable even if the user
-      // sends another message before this callback fires.
-      console.log('[AppContext] DONE, messageId from main:', data.messageId, 'streamingAssistantId:', cur.streamingAssistantId, 'msg count:', cur.messages.length)
       const assistantMsg = cur.messages.find(m => m.id === data.messageId)
-      console.log('[AppContext] DONE assistantMsg found:', !!assistantMsg, 'content len:', assistantMsg?.content?.length)
       if (cur.currentSessionId && assistantMsg && assistantMsg.content) {
-        console.log('[AppContext] DONE persisting assistant msg, sessionId:', cur.currentSessionId)
-        try {
-          await window.api.appendMessage(cur.currentSessionId, assistantMsg)
-          console.log('[AppContext] DONE persist OK')
-        } catch (e) { console.log('[AppContext] DONE persist FAIL:', e) }
+        await window.api.appendMessage(cur.currentSessionId, assistantMsg).catch(() => {})
       }
       dispatch({ type: 'FINISH_STREAMING' })
       await loadSessions()
