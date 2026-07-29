@@ -138,7 +138,15 @@ export function startChat(
   let lastText = ''
 
   pty.onData((data: string) => {
-    buffer += stripControlChars(data)
+    // Use a single-pass regex to clean all control sequences in one go.
+    // Order: CSI/DEC → OSC → CR→LF → remaining control chars → stray ESC.
+    const cleaned = data
+      .replace(/\x1b\[[\?>]?[0-9;]*[a-zA-Z]/g, '')
+      .replace(/\x1b\][^\x07\x1b]*\x07?/g, '')
+      .replace(/\r\n?/g, '\n')
+      .replace(/[\x00-\x09\x0b\x0c\x0e-\x1f]/g, '')
+      .replace(/\x1b/g, '')
+    buffer += cleaned
     const { objs, rest } = extractCompleteObjects(buffer)
     buffer = rest
 
