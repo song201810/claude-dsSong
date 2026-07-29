@@ -122,6 +122,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const loadSessions = useCallback(async () => {
     const sessions = await window.api.listSessions()
+    console.log('[AppContext] loadSessions, count:', sessions.length)
     dispatch({ type: 'SET_SESSIONS', payload: sessions })
   }, [])
 
