@@ -9,7 +9,7 @@ export default function ChatView() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [state.messages, state.streamingContent])
+  }, [state.messages, state.isStreaming])
 
   if (state.messages.length === 0 && !state.isStreaming) {
     return (
