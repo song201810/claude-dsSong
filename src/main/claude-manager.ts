@@ -127,8 +127,6 @@ export function startChat(
   let lastText = ''
 
   pty.onData((data: string) => {
-    // Log raw output before cleaning for diagnostic purposes
-    console.log('[claude-manager] RAW:', JSON.stringify(data.slice(0, 200)))
     buffer += cleanPtyOutput(data)
     const { objs, rest } = parseJsonlLines(buffer)
     buffer = rest
