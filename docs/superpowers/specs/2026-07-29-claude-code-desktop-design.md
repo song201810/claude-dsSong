@@ -2,14 +2,14 @@
 
 ## 项目定位
 
-参考 claude-libre 的设计思路，重新实现一个 Claude Code CLI 的桌面 GUI 客户端。免费、开源，通过本地 `claude` CLI 进程与 Claude 通信。
+实现一个 Claude Code CLI 的桌面 GUI 客户端。免费、开源，通过本地 `claude` CLI 进程与 Claude 通信。
 
 ## 技术栈
 
 | 层级 | 技术 | 理由 |
 |------|------|------|
 | 桌面框架 | Electron 34 | 跨平台、成熟生态、可直接调用 Node.js API |
-| 前端框架 | React 19 + TypeScript 5.7 | 生态最成熟，可参考 claude-libre 组件拆分 |
+| 前端框架 | React 19 + TypeScript 5.7 | 生态最成熟 |
 | 构建工具 | electron-vite | Electron 专用构建方案，热更新快 |
 | 样式方案 | Tailwind CSS 4 + Radix UI | 快速出活、样式灵活、无头组件 |
 | 终端模拟 | node-pty | 伪终端管理 Claude CLI 进程 |
@@ -443,15 +443,9 @@ claude-code-desktop/
 ## 主动放弃与取舍
 
 1. **放弃 xterm.js 终端集成**：MVP 只做聊天界面。Claude CLI 在后台通过 pty 运行，用户不需要看到原始终端输出。这大幅简化了 UI 复杂度。
-
 2. **放弃外部数据库**：用本地 JSON 文件而非 SQLite/IndexedDB。三个功能的规模用 JSON 文件足够，调试方便，schema 变更灵活。
-
 3. **放弃 CI/CD 和自动打包**：MVP 阶段手动 `npm run build` 即可。配置 GitHub Actions 打包 Win/Mac/Linux 安装包是发行阶段的事情。
-
 4. **放弃国际化**：先做中文界面，字符串不抽成 i18n key。后续加国际化时再统一改造。
-
-5. **放弃文件监听实时同步**：claude-libre 用 chokidar 监听 .jsonl 实现 CLI 和 GUI 的同步。MVP 中我们直接通过 pty 的 stdout 获取所有输出，不额外监听文件——因为我们的 GUI 就是 CLI 的唯一交互入口。
-
 6. **放弃权限拦截 GUI**：Claude CLI 的权限询问（Allow/Deny）在 pty 层面自动回复 Allow，权限管理留给后续版本。
 
 ## IPC 通道设计
