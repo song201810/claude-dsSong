@@ -85,7 +85,9 @@ function parseJsonlLines(buf: string): { objs: Array<Record<string, any>>; rest:
   for (const line of lines) {
     const trimmed = line.trim()
     if (!trimmed || trimmed[0] !== '{') continue
-    try { objs.push(JSON.parse(trimmed)) } catch { /* skip corrupt line */ }
+    try { objs.push(JSON.parse(trimmed)) } catch {
+      console.log('[claude-manager] JSON PARSE FAIL, line head:', JSON.stringify(trimmed.slice(0, 120)))
+    }
   }
   return { objs, rest }
 }
