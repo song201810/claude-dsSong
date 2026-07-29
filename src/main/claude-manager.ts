@@ -144,10 +144,27 @@ export function startChat(
 
   let buffer = ''
 
-  pty.onData((data: string) => {
-    buffer += data
+  /** Strip ANSI escape codes (terminal control sequences from pty) */
+  function clean(data: string): string {
+    // Remove ANSI escape sequences: CSI sequences, OSC sequences, DCS sequences
+    return data.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\x1b\][^\x07]*\x07/g, '')
+  }
 
-    // Split by lines
+  /** Extract text from assistant content blocks, return { text, thinking } */
+  function extractContent(blocks: Array<{ type: string; text?: string; thinking?: string }>): { text: string; thinking: string } {
+    let text = ''
+    let thinking = ''
+    for (const block of blocks) {
+      if (block.type === 'text' && block.text) text += block.text
+      else if (block.type === 'thinking' && block.thinking) thinking += block.thinking
+    }
+    return { text, thinking }
+  }
+
+  pty.onData((raw: string) => {
+    buffer += clean(raw)
+
+    // Split by lines (JSONL: one JSON object per line)
     const lines = buffer.split('\n')
     buffer = lines.pop() || '' // Keep incomplete line
 
@@ -155,79 +172,78 @@ export function startChat(
       if (!line.trim()) continue
 
       try {
-        // Claude CLI stream-json format
         const parsed = JSON.parse(line)
 
-        let tokenToSend = ''
+        // === System events: ignore for display ===
+        if (parsed.type === 'system') return
 
-        if (parsed.type === 'content_block_delta') {
-          if (parsed.delta?.type === 'text_delta') {
-            tokenToSend = parsed.delta.text
-            proc.accumulatedContent += tokenToSend
-          } else if (parsed.delta?.type === 'thinking_delta') {
-            proc.accumulatedThinking += parsed.delta.thinking
-            proc.isThinking = true
-          }
-        } else if (parsed.type === 'content_block_start') {
-          if (parsed.content_block?.type === 'thinking') {
-            proc.isThinking = true
-          }
-        } else if (parsed.type === 'content_block_stop') {
-          proc.isThinking = false
-        } else if (parsed.type === 'assistant') {
-          // Full assistant message
-          if (parsed.message?.content) {
-            for (const block of parsed.message.content) {
-              if (block.type === 'text') {
-                tokenToSend += block.text
-              }
-            }
-            proc.accumulatedContent += tokenToSend
-          }
-        } else if (parsed.type === 'error') {
+        // === Error event ===
+        if (parsed.type === 'error' || parsed.is_error) {
           const event: ChatErrorEvent = {
             sessionId: params.sessionId,
             messageId,
-            error: parsed.error?.message || 'Unknown error',
+            error: parsed.error?.message || parsed.result || 'Claude 返回错误',
           }
           sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, event)
-          activeProcesses.delete(params.sessionId)
           return
         }
 
-        // Push token to renderer if any
-        if (tokenToSend) {
-          const event: ChatTokenEvent = {
+        // === Assistant message: progressive full content ===
+        if (parsed.type === 'assistant' && parsed.message?.content) {
+          const { text, thinking } = extractContent(parsed.message.content)
+
+          // Only send NEW content since last assistant event (the CLI sends full
+          // progressive replacements, not deltas)
+          let tokenToSend = ''
+          if (text.length > proc.accumulatedContent.length) {
+            tokenToSend = text.slice(proc.accumulatedContent.length)
+            proc.accumulatedContent = text
+          }
+
+          const newThinking = thinking.slice(proc.accumulatedThinking.length)
+          if (newThinking) {
+            proc.accumulatedThinking = thinking
+          }
+
+          if (tokenToSend) {
+            const event: ChatTokenEvent = {
+              sessionId: params.sessionId,
+              messageId,
+              token: tokenToSend,
+              thinking: proc.accumulatedThinking || undefined,
+            }
+            sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, event)
+          }
+        }
+
+        // === Result event: done ===
+        if (parsed.type === 'result') {
+          const event: ChatDoneEvent = {
             sessionId: params.sessionId,
             messageId,
-            token: tokenToSend,
-            thinking: proc.accumulatedThinking || undefined,
+            fullContent: parsed.result || proc.accumulatedContent,
           }
-          sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, event)
+          sender.webContents.send(IPC_CHANNELS.CHAT_DONE, event)
+          activeProcesses.delete(params.sessionId)
+          return
         }
       } catch {
-        // Non-JSON line, could be plain text output (CLI streaming fallback)
-        if (line.trim()) {
-          proc.accumulatedContent += line + '\n'
-          const event: ChatTokenEvent = {
-            sessionId: params.sessionId,
-            messageId,
-            token: line + '\n',
-          }
-          sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, event)
-        }
+        // Non-JSON line (header, blank, etc.) — ignore
       }
     }
   })
 
   pty.onExit(({ exitCode }) => {
-    const event: ChatDoneEvent = {
-      sessionId: params.sessionId,
-      messageId,
-      fullContent: proc.accumulatedContent,
+    // Only send done if we didn't already via result event
+    if (activeProcesses.has(params.sessionId)) {
+      const event: ChatDoneEvent = {
+        sessionId: params.sessionId,
+        messageId,
+        fullContent: proc.accumulatedContent,
+      }
+      sender.webContents.send(IPC_CHANNELS.CHAT_DONE, event)
+      activeProcesses.delete(params.sessionId)
     }
-    sender.webContents.send(IPC_CHANNELS.CHAT_DONE, event)
-    activeProcesses.delete(params.sessionId)
   })
 }
 
