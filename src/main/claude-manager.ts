@@ -109,7 +109,7 @@ export function startChat(
   }
 
   const args = ['-p', params.message, '--model', params.model,
-                 '--output-format', 'stream-json', '--verbose', '--no-ansi']
+                 '--output-format', 'stream-json', '--verbose', '-f', 'json']
 
   let pty: IPty
   try { pty = spawnClaude(args, process.cwd()) } catch (err) {
