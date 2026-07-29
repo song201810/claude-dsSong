@@ -80,7 +80,8 @@ export interface SendMessageParams {
   sessionId: string
   message: string
   model: string
-  assistantMessageId?: string  // pre-generated ID so ChatDoneEvent can carry it back
+  assistantMessageId?: string
+  workDir?: string  // user-chosen project directory for Claude's working context
 }
 
 export interface ChatTokenEvent {

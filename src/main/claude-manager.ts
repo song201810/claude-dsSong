@@ -125,7 +125,7 @@ export function startChat(
   const args = ['-p', params.message, '--model', params.model,
                  '--output-format', 'stream-json', '--verbose']
 
-  const child = spawnClaudeProc(args, process.cwd())
+  const child = spawnClaudeProc(args, params.workDir || process.cwd())
   child.on('error', (err) => {
     sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, {
       sessionId: params.sessionId, messageId,
