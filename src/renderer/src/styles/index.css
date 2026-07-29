@@ -30,7 +30,6 @@ h1, h2, h3, h4 {
 /* Smaller font for UI elements */
 .text-sm { font-weight: 425; }
 .text-xs { font-weight: 425; }
-.text-[10px] { font-weight: 425; }
 
 /* ============ CSS custom properties (warm dark — default) ============ */
 :root, .theme-warm {
