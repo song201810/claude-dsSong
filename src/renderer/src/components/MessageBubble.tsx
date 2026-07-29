@@ -25,6 +25,11 @@ export default function MessageBubble({ message, isStreaming }: Props) {
   const showLoading = !isUser && isEmpty && isStreaming
   const [thinkingExpanded, setThinkingExpanded] = useState(false)
 
+  const formatTime = (iso: string) => {
+    const d = new Date(iso)
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  }
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2 px-3`}>
       <div
@@ -86,6 +91,10 @@ export default function MessageBubble({ message, isStreaming }: Props) {
             )}
           </div>
         )}
+
+        <span className={`text-[10px] text-[var(--fg-dim)] mt-1.5 block select-none ${isUser ? 'text-left' : 'text-right'}`}>
+          {formatTime(message.timestamp)}
+        </span>
       </div>
     </div>
   )

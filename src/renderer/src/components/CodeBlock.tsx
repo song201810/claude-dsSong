@@ -28,7 +28,7 @@ export default function CodeBlock({ language, code }: Props) {
         </button>
       </div>
       <pre className="px-3 py-2.5 text-sm overflow-x-auto bg-[var(--bg-code)] font-mono
-                       leading-relaxed text-[var(--fg-primary)]">
+                       leading-relaxed text-[var(--fg-muted)]">
         <code>{code}</code>
       </pre>
     </div>

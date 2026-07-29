@@ -63,7 +63,7 @@ export default function ChatView() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto py-4">
+    <div className="flex-1 overflow-y-auto py-4 animate-fade-in" key={state.currentSessionId}>
       {state.messages.map((msg) => (
         <MessageBubble key={msg.id} message={msg} isStreaming={state.isStreaming} />
       ))}
