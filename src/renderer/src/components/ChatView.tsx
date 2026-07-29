@@ -1,10 +1,36 @@
 // src/renderer/src/components/ChatView.tsx
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import MessageBubble from './MessageBubble'
 import { useAppContext } from '../context/AppContext'
 
+function ErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => void }) {
+  const [visible, setVisible] = useState(true)
+  useEffect(() => {
+    const t = setTimeout(() => { setVisible(false); setTimeout(onDismiss, 300) }, 8000)
+    return () => clearTimeout(t)
+  }, [onDismiss])
+
+  return (
+    <div
+      className={`mx-4 mb-4 px-4 py-3 rounded-lg bg-red-900/40 border border-red-700/60
+                  text-red-200 text-sm flex items-start gap-3 transition-all duration-300
+                  ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
+    >
+      <span className="text-lg flex-shrink-0 mt-0.5">⚠️</span>
+      <span className="flex-1 leading-relaxed">{error}</span>
+      <button
+        className="flex-shrink-0 text-red-300 hover:text-red-100 transition-colors text-sm px-1"
+        onClick={() => { setVisible(false); setTimeout(onDismiss, 300) }}
+        title="关闭"
+      >
+        ✕
+      </button>
+    </div>
+  )
+}
+
 export default function ChatView() {
-  const { state } = useAppContext()
+  const { state, dispatch } = useAppContext()
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -38,10 +64,10 @@ export default function ChatView() {
       ))}
 
       {state.error && (
-        <div className="mx-4 mb-4 px-4 py-3 rounded-lg bg-red-900/30 border border-red-800/50
-                        text-red-300 text-sm">
-          ⚠ {state.error}
-        </div>
+        <ErrorBanner
+          error={state.error}
+          onDismiss={() => dispatch({ type: 'SET_ERROR', payload: null })}
+        />
       )}
 
       <div ref={bottomRef} />
