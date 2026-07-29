@@ -116,6 +116,8 @@ export function startChat(
   let lastText = ''
 
   pty.onData((data: string) => {
+    // Log to main process console AND send to renderer console
+    console.log('[claude-manager] onData called, len:', data.length)
     // Use a single-pass regex to clean all control sequences in one go.
     // Order: CSI/DEC → OSC → CR→LF → remaining control chars → stray ESC.
     const cleaned = data
@@ -124,11 +126,13 @@ export function startChat(
       .replace(/\r\n?/g, '\n')
       .replace(/[\x00-\x09\x0b\x0c\x0e-\x1f]/g, '')
       .replace(/\x1b/g, '')
+    console.log('[claude-manager] cleaned first 200:', JSON.stringify(cleaned.slice(0, 200)))
     buffer += cleaned
     const { objs, rest } = extractCompleteObjects(buffer)
     buffer = rest
 
     for (const obj of objs) {
+      console.log('[claude-manager] obj type:', obj.type)
       if (obj.type === 'system') continue
 
       if (obj.type === 'error' || obj.is_error) {
