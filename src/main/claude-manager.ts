@@ -1,9 +1,9 @@
 // src/main/claude-manager.ts
-import { spawn, IPty } from 'node-pty'
 import { BrowserWindow } from 'electron'
-import { execSync } from 'child_process'
+import { execSync, spawn as spawnProc } from 'child_process'
 import { join } from 'path'
 import { existsSync } from 'fs'
+import { IPty, spawn as spawnPty } from 'node-pty'
 import {
   type SendMessageParams,
   type ChatTokenEvent,
@@ -12,8 +12,15 @@ import {
   IPC_CHANNELS,
 } from '../shared/types'
 
+// After Fix-010 we learned that pty terminal column wrapping will hard-break
+// long JSON lines no matter how large `cols` is.  Long replies (200+ chars)
+// always overflow.  For `-p` (single-question) mode we do NOT need a pty at
+// all — a plain `child_process.spawn` sends the message and captures stdout
+// without terminal processing.  This keeps every JSON object on a single line.
+// We only fall back to node-pty when stdin is needed (which we don't use yet).
+
 interface ActiveProcess {
-  pty: IPty
+  kill: () => void
   messageId: string
   sessionId: string
   accumulatedText: string
@@ -48,53 +55,57 @@ function findClaudePath(): string | null {
   }
 }
 
-function spawnClaude(args: string[], cwd: string): IPty {
-  if (process.platform === 'win32') {
-    return spawn('cmd.exe', ['/c', 'claude', ...args.map(a =>
-      /\s/.test(a) || a.includes('"') ? `"${a.replace(/"/g, '\\"')}"` : a
-    )], {
-      name: 'xterm-256color', cols: 999, rows: 40, cwd,
-      env: { ...process.env, TERM: 'xterm-256color' },
-    })
-  }
-  return spawn('claude', args, {
-    name: 'xterm-256color', cols: 999, rows: 40, cwd,
-    env: { ...process.env, TERM: 'xterm-256color' },
-  })
+/**
+ * Strip ANSI escape codes.  Even child_process output may contain some
+ * control codes (though far fewer than pty).  Be defensive.
+ */
+function stripAnsi(s: string): string {
+  return s
+    .replace(/\x1b\[[\?>]?[0-9;]*[a-zA-Z]/g, '')
+    .replace(/\x1b\][^\x07\x1b]*\x07?/g, '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '')
+    .replace(/\x1b/g, '')
 }
 
 /**
- * Strip all ANSI/terminal control sequences.
- * Claude Code CLI's pty output is a clean JSONL stream with ANSI codes
- * injected by the terminal layer.  Strip so that each physical line is
- * one complete JSON object.
+ * Parse JSONL: split on newlines, parse each line that starts with `{`.
+ * Returns parsed objects + the trailing partial-line (if any).
  */
-function cleanPtyOutput(data: string): string {
-  return data
-    .replace(/\x1b\[[\?>]?[0-9;]*[a-zA-Z]/g, '')   // CSI / DEC private modes
-    .replace(/\x1b\][^\x07\x1b]*\x07?/g, '')         // OSC sequences
-    .replace(/\r\n?/g, '\n')
-    .replace(/[\x00-\x09\x0b\x0c\x0e-\x1f]/g, '')
-    .replace(/\x1b/g, '')                              // any stray ESC
-}
-
 function parseJsonlLines(buf: string): { objs: Array<Record<string, any>>; rest: string } {
   const objs: Array<Record<string, any>> = []
   const lines = buf.split('\n')
   const rest = lines.pop() || ''
-    // Log every parsed line regardless of parse success
-    for (const line of lines) {
-      const trimmed = line.trim()
-      if (!trimmed) continue
-      if (trimmed[0] !== '{') {
-        // console.log('[claude-manager] SKIP non-JSON line:', JSON.stringify(trimmed.slice(0, 100)))
-        continue
-      }
-      try { objs.push(JSON.parse(trimmed)) } catch {
-        console.log('[claude-manager] JSON PARSE FAIL:', JSON.stringify(trimmed.slice(0, 200)))
-      }
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed[0] !== '{') continue
+    try { objs.push(JSON.parse(trimmed)) } catch {
+      console.log('[claude-manager] JSON PARSE FAIL:', JSON.stringify(trimmed.slice(0, 200)))
     }
+  }
   return { objs, rest }
+}
+
+/**
+ * Spawn claude as a plain child process (not pty).  On Windows we still go
+ * through cmd.exe so .cmd files are resolved.  This avoids ALL terminal
+ * column wrapping, ANSI injection, and pty overhead — stdout is raw text.
+ */
+function spawnClaudeProc(args: string[], cwd: string) {
+  if (process.platform === 'win32') {
+    const escaped = args.map(a => /\s/.test(a) || a.includes('"') ? `"${a.replace(/"/g, '\\"')}"` : a)
+    return spawnProc('cmd.exe', ['/c', 'claude', ...escaped], {
+      cwd,
+      env: { ...process.env },
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    })
+  }
+  return spawnProc('claude', args, {
+    cwd,
+    env: { ...process.env },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
 }
 
 export function startChat(
@@ -116,34 +127,36 @@ export function startChat(
   const args = ['-p', params.message, '--model', params.model,
                  '--output-format', 'stream-json', '--verbose']
 
-  let pty: IPty
-  try { pty = spawnClaude(args, process.cwd()) } catch (err) {
+  const child = spawnClaudeProc(args, process.cwd())
+  child.on('error', (err) => {
     sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, {
       sessionId: params.sessionId, messageId,
-      error: `无法启动 claude 进程: ${err instanceof Error ? err.message : String(err)}`,
+      error: `无法启动 claude 进程: ${err.message}`,
     })
-    return
-  }
+  })
 
-  const proc: ActiveProcess = {
-    pty, messageId, sessionId: params.sessionId, accumulatedText: '',
-  }
-  activeProcesses.set(params.sessionId, proc)
+  child.stderr?.on('data', (data: Buffer) => {
+    // Claude CLI prints info/debug to stderr.  Log it but don't treat it as an error.
+    console.log('[claude-manager] stderr:', data.toString().slice(0, 200))
+  })
 
   let buffer = ''
   let lastText = ''
 
-  pty.onData((data: string) => {
-    console.log('[claude-manager] RAW chunk len:', data.length, 'first 300 raw:', JSON.stringify(data.slice(0, 300)))
-    const cleaned = cleanPtyOutput(data)
-    console.log('[claude-manager] CLEANED first 300:', JSON.stringify(cleaned.slice(0, 300)))
-    buffer += cleaned
+  const proc: ActiveProcess = {
+    kill: () => { try { child.kill() } catch {} },
+    messageId,
+    sessionId: params.sessionId,
+    accumulatedText: '',
+  }
+  activeProcesses.set(params.sessionId, proc)
+
+  child.stdout!.on('data', (data: Buffer) => {
+    buffer += stripAnsi(data.toString('utf-8'))
     const { objs, rest } = parseJsonlLines(buffer)
-    console.log('[claude-manager] parsed objs:', objs.length, 'rest len:', rest.length, 'rest first 200:', JSON.stringify(rest.slice(0, 200)))
     buffer = rest
 
     for (const obj of objs) {
-      console.log('[claude-manager] obj type:', obj.type, obj.subtype || '')
       if (obj.type === 'system') continue
 
       if (obj.type === 'error' || obj.is_error) {
@@ -160,12 +173,10 @@ export function startChat(
         for (const block of obj.message.content) {
           if (block.type === 'text' && block.text) newText += block.text
         }
-        console.log('[claude-manager] ASSISTANT text_len:', newText.length, 'lastText:', lastText.length)
         if (newText.length > lastText.length) {
           const diff = newText.slice(lastText.length)
           lastText = newText
           proc.accumulatedText = newText
-          console.log('[claude-manager] SENDING token diff_len:', diff.length)
           sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, {
             sessionId: params.sessionId, messageId, token: diff,
           })
@@ -173,14 +184,9 @@ export function startChat(
       }
 
       if (obj.type === 'result') {
-        // Prefer the accumulated progressive text.  If the CLI sent
-        // multiple assistant messages we already have the full content.
-        // The `result.result` field is a fallback in case the progressive
-        // events were missed (e.g. first token is the full answer).
         const progressiveText = proc.accumulatedText
         const resultText = (obj as any).result || ''
         const finalText = progressiveText || resultText
-        console.log('[claude-manager] RESULT progressiveText_len:', progressiveText.length, 'resultText_len:', resultText.length)
         sender.webContents.send(IPC_CHANNELS.CHAT_DONE, {
           sessionId: params.sessionId, messageId,
           fullContent: finalText,
@@ -191,7 +197,7 @@ export function startChat(
     }
   })
 
-  pty.onExit(() => {
+  child.on('close', () => {
     if (activeProcesses.has(params.sessionId)) {
       sender.webContents.send(IPC_CHANNELS.CHAT_DONE, {
         sessionId: params.sessionId, messageId,
@@ -205,7 +211,7 @@ export function startChat(
 export function cancelChat(sessionId: string): void {
   const proc = activeProcesses.get(sessionId)
   if (!proc) return
-  try { proc.pty.kill() } catch { /* already dead */ }
+  try { proc.kill() } catch { /* already dead */ }
   activeProcesses.delete(sessionId)
 }
 
