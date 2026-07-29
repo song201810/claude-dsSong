@@ -211,14 +211,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const cleanupToken = window.api.onChatToken((data) => {
+      console.log('[AppContext] onChatToken:', data.token?.slice(0, 50))
       dispatch({ type: 'APPEND_TOKEN', payload: { token: data.token, thinking: data.thinking } })
     })
 
     const cleanupError = window.api.onChatError((data) => {
+      console.log('[AppContext] onChatError:', data.error)
       dispatch({ type: 'SET_ERROR', payload: data.error })
     })
 
-    const cleanupDone = window.api.onChatDone(() => {
+    const cleanupDone = window.api.onChatDone((data) => {
+      console.log('[AppContext] onChatDone, fullContent:', data.fullContent?.slice(0, 50))
       dispatch({ type: 'FINISH_STREAMING' })
       loadSessions()
     })

@@ -18,14 +18,11 @@ interface ActiveProcess {
   sessionId: string
   accumulatedContent: string
   accumulatedThinking: string
-  isThinking: boolean
 }
 
 const activeProcesses = new Map<string, ActiveProcess>()
 
-/** Find the absolute path to the claude binary, or null if not found */
 function findClaudePath(): string | null {
-  // Check common npm global install locations on Windows
   if (process.platform === 'win32') {
     const npmPrefix = (() => {
       try { return execSync('npm prefix -g', { encoding: 'utf-8' }).trim() }
@@ -42,7 +39,6 @@ function findClaudePath(): string | null {
       }
     }
 
-    // Try to resolve via 'where' command
     try {
       const result = execSync('where claude', { encoding: 'utf-8' }).trim()
       const lines = result.split('\n').map(l => l.trim()).filter(Boolean)
@@ -50,7 +46,6 @@ function findClaudePath(): string | null {
     } catch { /* fallthrough */ }
   }
 
-  // Unix: try which
   try {
     return execSync('which claude', { encoding: 'utf-8' }).trim() || null
   } catch {
@@ -58,14 +53,11 @@ function findClaudePath(): string | null {
   }
 }
 
-/** Spawn command that works on both Windows (.cmd/.mjs) and Unix */
 function spawnClaude(args: string[], cwd: string): IPty {
   const shell = process.platform === 'win32' ? 'cmd.exe' : (process.env.SHELL || '/bin/sh')
 
-  // On Windows, quote args and pass through cmd.exe so .cmd files work
   if (process.platform === 'win32') {
     const escaped = args.map(a => {
-      // Wrap arguments containing spaces in quotes, escape inner quotes
       if (/\s/.test(a) || a.includes('"')) {
         return `"${a.replace(/"/g, '\\"')}"`
       }
@@ -99,7 +91,6 @@ export function startChat(
 
   const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
-  // Check if claude CLI is available before spawning
   const claudePath = findClaudePath()
   if (!claudePath) {
     const event: ChatErrorEvent = {
@@ -137,21 +128,17 @@ export function startChat(
     sessionId: params.sessionId,
     accumulatedContent: '',
     accumulatedThinking: '',
-    isThinking: false,
   }
 
   activeProcesses.set(params.sessionId, proc)
 
   let buffer = ''
 
-  /** Strip ANSI escape codes (terminal control sequences from pty) */
   function clean(data: string): string {
-    // Remove ANSI escape sequences: CSI sequences, OSC sequences, DCS sequences
     return data.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\x1b\][^\x07]*\x07/g, '')
   }
 
-  /** Extract text from assistant content blocks, return { text, thinking } */
-  function extractContent(blocks: Array<{ type: string; text?: string; thinking?: string }>): { text: string; thinking: string } {
+  function extractParts(blocks: Array<{ type: string; text?: string; thinking?: string }>): { text: string; thinking: string } {
     let text = ''
     let thinking = ''
     for (const block of blocks) {
@@ -163,99 +150,82 @@ export function startChat(
 
   pty.onData((raw: string) => {
     buffer += clean(raw)
-
-    // Split by lines (JSONL: one JSON object per line)
     const lines = buffer.split('\n')
-    buffer = lines.pop() || '' // Keep incomplete line
+    buffer = lines.pop() || ''
 
     for (const line of lines) {
       if (!line.trim()) continue
 
       try {
         const parsed = JSON.parse(line)
+        console.log('[claude-manager] type:', parsed.type)
+        if (parsed.type === 'system') continue
 
-        // === System events: ignore for display ===
-        if (parsed.type === 'system') return
-
-        // === Error event ===
         if (parsed.type === 'error' || parsed.is_error) {
-          const event: ChatErrorEvent = {
+          console.log('[claude-manager] ERROR')
+          const evt: ChatErrorEvent = {
             sessionId: params.sessionId,
             messageId,
             error: parsed.error?.message || parsed.result || 'Claude 返回错误',
           }
-          sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, event)
+          sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, evt)
           return
         }
 
-        // === Assistant message: progressive full content ===
         if (parsed.type === 'assistant' && parsed.message?.content) {
-          const { text, thinking } = extractContent(parsed.message.content)
-
-          // Only send NEW content since last assistant event (the CLI sends full
-          // progressive replacements, not deltas)
-          let tokenToSend = ''
+          const { text, thinking } = extractParts(parsed.message.content)
+          let diff = ''
           if (text.length > proc.accumulatedContent.length) {
-            tokenToSend = text.slice(proc.accumulatedContent.length)
+            diff = text.slice(proc.accumulatedContent.length)
             proc.accumulatedContent = text
           }
-
           const newThinking = thinking.slice(proc.accumulatedThinking.length)
-          if (newThinking) {
-            proc.accumulatedThinking = thinking
-          }
+          if (newThinking) proc.accumulatedThinking = thinking
 
-          if (tokenToSend) {
-            const event: ChatTokenEvent = {
+          if (diff) {
+            console.log('[claude-manager] SENDING token, len:', diff.length, 'total:', proc.accumulatedContent.length)
+            const evt: ChatTokenEvent = {
               sessionId: params.sessionId,
               messageId,
-              token: tokenToSend,
+              token: diff,
               thinking: proc.accumulatedThinking || undefined,
             }
-            sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, event)
+            sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, evt)
           }
         }
 
-        // === Result event: done ===
         if (parsed.type === 'result') {
-          const event: ChatDoneEvent = {
+          console.log('[claude-manager] DONE')
+          const evt: ChatDoneEvent = {
             sessionId: params.sessionId,
             messageId,
-            fullContent: parsed.result || proc.accumulatedContent,
+            fullContent: (parsed as any).result || proc.accumulatedContent,
           }
-          sender.webContents.send(IPC_CHANNELS.CHAT_DONE, event)
+          sender.webContents.send(IPC_CHANNELS.CHAT_DONE, evt)
           activeProcesses.delete(params.sessionId)
           return
         }
-      } catch {
-        // Non-JSON line (header, blank, etc.) — ignore
-      }
+      } catch { /* non-JSON lines */ }
     }
   })
 
-  pty.onExit(({ exitCode }) => {
-    // Only send done if we didn't already via result event
+  pty.onExit(() => {
     if (activeProcesses.has(params.sessionId)) {
-      const event: ChatDoneEvent = {
+      const evt: ChatDoneEvent = {
         sessionId: params.sessionId,
         messageId,
         fullContent: proc.accumulatedContent,
       }
-      sender.webContents.send(IPC_CHANNELS.CHAT_DONE, event)
+      sender.webContents.send(IPC_CHANNELS.CHAT_DONE, evt)
       activeProcesses.delete(params.sessionId)
     }
   })
 }
 
 export function cancelChat(sessionId: string): void {
-  const process = activeProcesses.get(sessionId)
-  if (!process) return
-
-  try {
-    process.pty.kill()
-  } catch {
-    // Process may have already exited
-  }
+  const proc = activeProcesses.get(sessionId)
+  if (!proc) return
+  try { proc.pty.kill() } catch { /* already dead */ }
   activeProcesses.delete(sessionId)
 }
 
