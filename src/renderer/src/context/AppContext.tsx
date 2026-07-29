@@ -13,6 +13,7 @@ interface AppState {
   isStreaming: boolean
   streamingAssistantId: string | null
   error: string | null
+  theme: 'warm' | 'cool' | 'light'
 }
 
 const initialState: AppState = {
@@ -25,6 +26,7 @@ const initialState: AppState = {
   isStreaming: false,
   streamingAssistantId: null,
   error: null,
+  theme: 'warm',
 }
 
 // ============ Actions ============
@@ -40,6 +42,7 @@ type Action =
   | { type: 'FINISH_STREAMING' }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_THEME'; payload: 'warm' | 'cool' | 'light' }
   | { type: 'REMOVE_SESSION'; payload: string }
 
 function reducer(state: AppState, action: Action): AppState {
@@ -86,6 +89,8 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, error: action.payload, isStreaming: false }
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload }
+    case 'SET_THEME':
+      return { ...state, theme: action.payload }
     case 'REMOVE_SESSION':
       return {
         ...state,
@@ -111,6 +116,8 @@ interface AppContextType {
   sendMessage: (content: string) => void
   cancelMessage: () => void
   loadModels: () => Promise<void>
+  setTheme: (theme: 'warm' | 'cool' | 'light') => Promise<void>
+  loadTheme: () => Promise<void>
 }
 
 const AppContext = createContext<AppContextType | null>(null)
@@ -191,6 +198,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'SET_MODELS', payload: models })
   }, [])
 
+  const loadTheme = useCallback(async () => {
+    const settings = await window.api.getSettings()
+    dispatch({ type: 'SET_THEME', payload: settings.theme || 'warm' })
+  }, [])
+
+  const setTheme = useCallback(async (theme: 'warm' | 'cool' | 'light') => {
+    await window.api.updateSettings({ theme })
+    dispatch({ type: 'SET_THEME', payload: theme })
+  }, [])
+
   // --- IPC listeners (registered once, uses stateRef to avoid stale closures) ---
   useEffect(() => {
     const c1 = window.api.onChatToken((data) => {
@@ -219,7 +236,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     loadSessions()
     loadModels()
-  }, [loadSessions, loadModels])
+    loadTheme()
+  }, [loadSessions, loadModels, loadTheme])
 
   return (
     <AppContext.Provider
@@ -227,6 +245,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         state, dispatch,
         loadSessions, switchSession, createSession, removeSession,
         sendMessage, cancelMessage, loadModels,
+        setTheme, loadTheme,
       }}
     >
       {children}

@@ -6,7 +6,7 @@ import { useAppContext } from '../context/AppContext'
 
 export default function Sidebar() {
   const [showModal, setShowModal] = useState(false)
-  const { createSession } = useAppContext()
+  const { state, createSession, setTheme } = useAppContext()
 
   return (
     <>
@@ -23,6 +23,29 @@ export default function Sidebar() {
           </button>
         </div>
         <SessionList />
+        <div className="mt-auto border-t border-[var(--border)] px-4 py-3">
+          <span className="text-xs text-[var(--fg-dim)]">主题</span>
+          <div className="flex gap-2 mt-2">
+            <button
+              className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
+                bg-[#231f1d] ${state.theme === 'warm' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}`}
+              onClick={() => setTheme('warm')}
+              title="暖色暗色"
+            />
+            <button
+              className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
+                bg-[#161822] ${state.theme === 'cool' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}`}
+              onClick={() => setTheme('cool')}
+              title="冷色暗色"
+            />
+            <button
+              className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
+                bg-[#ffffff] ${state.theme === 'light' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}`}
+              onClick={() => setTheme('light')}
+              title="明亮"
+            />
+          </div>
+        </div>
       </div>
 
       <NewSessionModal

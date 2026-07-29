@@ -68,7 +68,7 @@ export interface ModelInfo {
 export interface Settings {
   defaultModel: string
   models: ModelInfo[]
-  theme?: 'dark' | 'warm' | 'cool'
+  theme: 'warm' | 'cool' | 'light'
 }
 
 export interface CreateSessionParams {

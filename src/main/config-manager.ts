@@ -30,6 +30,7 @@ const DEFAULT_MODELS: ModelInfo[] = [
 const DEFAULT_SETTINGS: Settings = {
   defaultModel: 'claude-sonnet-4-6',
   models: DEFAULT_MODELS,
+  theme: 'warm',
 }
 
 export async function getSettings(): Promise<Settings> {
