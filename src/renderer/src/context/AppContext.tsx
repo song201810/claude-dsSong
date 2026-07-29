@@ -199,6 +199,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     })
     const c3 = window.api.onChatDone(async (data) => {
       const cur = stateRef.current
+      console.log('[AppContext] DONE, msgId:', data.messageId, 'fullContent len:', data.fullContent?.length)
       const assistantMsg = cur.messages.find(m => m.id === data.messageId)
       if (cur.currentSessionId && assistantMsg && assistantMsg.content) {
         await window.api.appendMessage(cur.currentSessionId, assistantMsg).catch(() => {})
