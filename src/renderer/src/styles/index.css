@@ -27,6 +27,11 @@ h1, h2, h3, h4 {
   letter-spacing: -0.01em;
 }
 
+/* Smaller font for UI elements */
+.text-sm { font-weight: 425; }
+.text-xs { font-weight: 425; }
+.text-[10px] { font-weight: 425; }
+
 /* ============ CSS custom properties (warm dark — default) ============ */
 :root, .theme-warm {
   --bg-root:    #1c1917;
