@@ -199,10 +199,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       console.log('[AppContext] ERROR', data.error)
       dispatch({ type: 'SET_ERROR', payload: data.error })
     })
-    const c3 = window.api.onChatDone(async () => {
+    const c3 = window.api.onChatDone(async (data) => {
       const cur = stateRef.current
-      console.log('[AppContext] DONE, streamingAssistantId:', cur.streamingAssistantId, 'msg count:', cur.messages.length)
-      const assistantMsg = cur.messages.find(m => m.id === cur.streamingAssistantId)
+      // Use the messageId from the main process — it's the assistant message ID
+      // that was sent in START_STREAMING. This is reliable even if the user
+      // sends another message before this callback fires.
+      console.log('[AppContext] DONE, messageId from main:', data.messageId, 'streamingAssistantId:', cur.streamingAssistantId, 'msg count:', cur.messages.length)
+      const assistantMsg = cur.messages.find(m => m.id === data.messageId)
       console.log('[AppContext] DONE assistantMsg found:', !!assistantMsg, 'content len:', assistantMsg?.content?.length)
       if (cur.currentSessionId && assistantMsg && assistantMsg.content) {
         console.log('[AppContext] DONE persisting assistant msg, sessionId:', cur.currentSessionId)
