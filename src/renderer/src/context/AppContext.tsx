@@ -193,18 +193,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Listen for IPC events from main process
   useEffect(() => {
     const c1 = window.api.onChatToken((data) => {
+      console.log('[AppContext] TOKEN len', data.token.length, 'assistantId', state.streamingAssistantId)
       dispatch({ type: 'APPEND_TOKEN', payload: { token: data.token, thinking: data.thinking } })
     })
     const c2 = window.api.onChatError((data) => {
+      console.log('[AppContext] ERROR', data.error)
       dispatch({ type: 'SET_ERROR', payload: data.error })
     })
     const c3 = window.api.onChatDone(async () => {
-      // Save the final assistant content before clearing streaming state
-      if (state.streamingAssistantId) {
-        const assistantMsg = state.messages.find(m => m.id === state.streamingAssistantId)
-        if (assistantMsg && assistantMsg.content) {
-          await window.api.appendMessage(state.currentSessionId!, assistantMsg).catch(() => {})
-        }
+      console.log('[AppContext] DONE, streamingAssistantId:', state.streamingAssistantId)
+      const msgs = state.messages
+      const assistantMsg = msgs.find(m => m.id === state.streamingAssistantId)
+      console.log('[AppContext] DONE assistantMsg found:', !!assistantMsg, 'content len:', assistantMsg?.content?.length)
+      if (assistantMsg && assistantMsg.content) {
+        console.log('[AppContext] DONE persisting assistant msg...')
+        try {
+          await window.api.appendMessage(state.currentSessionId!, assistantMsg)
+          console.log('[AppContext] DONE persist OK')
+        } catch (e) { console.log('[AppContext] DONE persist FAIL:', e) }
       }
       dispatch({ type: 'FINISH_STREAMING' })
       await loadSessions()
