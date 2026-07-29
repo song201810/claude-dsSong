@@ -136,8 +136,7 @@ export function startChat(
   })
 
   child.stderr?.on('data', (data: Buffer) => {
-    // Claude CLI prints info/debug to stderr.  Log it but don't treat it as an error.
-    console.log('[claude-manager] stderr:', data.toString().slice(0, 200))
+    // Claude CLI prints progress info to stderr.  Silently log (not an error).
   })
 
   let buffer = ''
@@ -153,8 +152,9 @@ export function startChat(
 
   child.stdout!.on('data', (data: Buffer) => {
     buffer += stripAnsi(data.toString('utf-8'))
-    console.log('[claude-manager] RAW chunk len:', data.length, 'first 300:', JSON.stringify(data.toString('utf-8').slice(0, 300)))
+    console.log('[claude-manager] RAW stdout chunk:', JSON.stringify(data.toString('utf-8').slice(0, 400)))
     const { objs, rest } = parseJsonlLines(buffer)
+    console.log('[claude-manager] objs=', objs.length, 'rest_len=', rest.length)
     buffer = rest
 
     for (const obj of objs) {
