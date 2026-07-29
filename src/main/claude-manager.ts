@@ -79,9 +79,7 @@ function parseJsonlLines(buf: string): { objs: Array<Record<string, any>>; rest:
   for (const line of lines) {
     const trimmed = line.trim()
     if (!trimmed || trimmed[0] !== '{') continue
-    try { objs.push(JSON.parse(trimmed)) } catch {
-      console.log('[claude-manager] JSON PARSE FAIL:', JSON.stringify(trimmed.slice(0, 200)))
-    }
+    try { objs.push(JSON.parse(trimmed)) } catch { /* skip corrupt lines */ }
   }
   return { objs, rest }
 }
@@ -152,9 +150,7 @@ export function startChat(
 
   child.stdout!.on('data', (data: Buffer) => {
     buffer += stripAnsi(data.toString('utf-8'))
-    console.log('[claude-manager] RAW stdout chunk:', JSON.stringify(data.toString('utf-8').slice(0, 400)))
     const { objs, rest } = parseJsonlLines(buffer)
-    console.log('[claude-manager] objs=', objs.length, 'rest_len=', rest.length)
     buffer = rest
 
     for (const obj of objs) {
