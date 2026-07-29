@@ -109,7 +109,7 @@ export function startChat(
   }
 
   const args = ['-p', params.message, '--model', params.model,
-                 '--output-format', 'stream-json', '--verbose']
+                 '--output-format', 'stream-json', '--verbose', '--no-ansi']
 
   let pty: IPty
   try { pty = spawnClaude(args, process.cwd()) } catch (err) {
@@ -129,10 +129,7 @@ export function startChat(
   let lastText = ''
 
   pty.onData((data: string) => {
-    // Log raw data AND its hex representation to see control characters
-    const hex = Buffer.from(data.slice(0, 100)).toString('hex')
-    console.log('[claude-manager] HEX first 100 bytes:', hex)
-    console.log('[claude-manager] RAW first 500:', JSON.stringify(data.slice(0, 500)))
+    console.log('[claude-manager] RAW CHUNK:', JSON.stringify(data.slice(0, 600)))
     buffer += sanitize(data)
     const { objs, rest } = extractObjects(buffer)
     buffer = rest
