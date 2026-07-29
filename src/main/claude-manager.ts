@@ -132,9 +132,10 @@ export function startChat(
     buffer += sanitize(raw)
     const { objs, rest } = extractObjects(buffer)
     buffer = rest
+    console.log('[claude-manager] raw len', raw.length, 'objs extracted', objs.length, 'buffer remaining', buffer.length)
 
     for (const obj of objs) {
-      if (obj.type === 'system') continue
+      console.log('[claude-manager] obj type:', obj.type)
 
       if (obj.type === 'error' || obj.is_error) {
         sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, {
@@ -150,13 +151,17 @@ export function startChat(
         for (const block of obj.message.content) {
           if (block.type === 'text' && block.text) newText += block.text
         }
+        console.log('[claude-manager] ASSISTANT text len', newText.length, 'lastText len', lastText.length)
         if (newText.length > lastText.length) {
           const diff = newText.slice(lastText.length)
           lastText = newText
           proc.accumulatedText = newText
+          console.log('[claude-manager] SENDING token diff len', diff.length, 'messageId', messageId)
           sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, {
             sessionId: params.sessionId, messageId, token: diff,
           })
+        } else {
+          console.log('[claude-manager] ASSISTANT no new text (same or shorter)')
         }
       }
 

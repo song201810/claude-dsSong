@@ -192,6 +192,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // --- IPC listeners (registered once, uses stateRef to avoid stale closures) ---
   useEffect(() => {
     const c1 = window.api.onChatToken((data) => {
+      console.log('[AppContext] TOKEN', data.token?.length, 'assistantId', data.messageId)
       dispatch({ type: 'APPEND_TOKEN', payload: { token: data.token, thinking: data.thinking } })
     })
     const c2 = window.api.onChatError((data) => {
@@ -199,7 +200,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     })
     const c3 = window.api.onChatDone(async (data) => {
       const cur = stateRef.current
+      console.log('[AppContext] DONE messageId', data.messageId, 'content len', data.fullContent?.length)
       const assistantMsg = cur.messages.find(m => m.id === data.messageId)
+      console.log('[AppContext] DONE found assistantMsg:', !!assistantMsg)
       if (cur.currentSessionId && assistantMsg && assistantMsg.content) {
         await window.api.appendMessage(cur.currentSessionId, assistantMsg).catch(() => {})
       }
