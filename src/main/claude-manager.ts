@@ -122,8 +122,15 @@ export function startChat(
     return
   }
 
+  // Build CLI args with --resume when continuing an existing conversation.
+  // For the first message in a session we use bare -p; subsequent messages
+  // get --resume so Claude picks up the prior exchange.
+  // We detect "first message" by checking the accumulated message count.
   const args = ['-p', params.message, '--model', params.model,
                  '--output-format', 'stream-json', '--verbose']
+  if (params.resume) {
+    args.push('--resume')
+  }
 
   const child = spawnClaudeProc(args, params.workDir || process.cwd())
   child.on('error', (err) => {

@@ -81,7 +81,8 @@ export interface SendMessageParams {
   message: string
   model: string
   assistantMessageId?: string
-  workDir?: string  // user-chosen project directory for Claude's working context
+  workDir?: string
+  resume?: boolean  // --resume: continue previous conversation in same session
 }
 
 export interface ChatTokenEvent {

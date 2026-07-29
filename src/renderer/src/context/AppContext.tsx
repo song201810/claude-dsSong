@@ -177,6 +177,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       sessionId: cur.currentSessionId, message: content, model: cur.currentModel,
       assistantMessageId: assistantId,
       workDir: cur.sessions.find(s => s.id === cur.currentSessionId)?.workDir,
+      resume: cur.messages.length > 0,  // --resume if this session already has messages
     })
   }, [])  // no stale deps — uses stateRef
 
