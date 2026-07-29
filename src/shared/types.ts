@@ -80,6 +80,7 @@ export interface SendMessageParams {
   sessionId: string
   message: string
   model: string
+  assistantMessageId?: string  // pre-generated ID so ChatDoneEvent can carry it back
 }
 
 export interface ChatTokenEvent {

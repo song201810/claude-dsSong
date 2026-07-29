@@ -97,7 +97,8 @@ export function startChat(
 ): void {
   if (activeProcesses.has(params.sessionId)) return
 
-  const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  // Use the pre-generated assistantMessageId from renderer if provided
+  const messageId = params.assistantMessageId || `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
   if (!findClaudePath()) {
     sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, {

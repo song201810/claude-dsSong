@@ -176,6 +176,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     window.api.sendMessage({
       sessionId: cur.currentSessionId, message: content, model: cur.currentModel,
+      assistantMessageId: assistantId,  // send back with ChatDoneEvent for reliable lookup
     })
   }, [])  // no stale deps — uses stateRef
 
