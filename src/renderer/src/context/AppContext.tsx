@@ -156,18 +156,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const userMsgId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const assistantId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-asst`
 
-    // Add user message
-    dispatch({
-      type: 'ADD_MESSAGE',
-      payload: { id: userMsgId, sessionId: state.currentSessionId, role: 'user', content, timestamp: new Date().toISOString() }
-    })
+    // Add user message + persist immediately
+    const userMsg: Message = {
+      id: userMsgId, sessionId: state.currentSessionId, role: 'user',
+      content, timestamp: new Date().toISOString()
+    }
+    dispatch({ type: 'ADD_MESSAGE', payload: userMsg })
+    window.api.appendMessage(state.currentSessionId, userMsg).catch(() => {})
 
     // Add empty assistant placeholder
-    dispatch({
-      type: 'ADD_MESSAGE',
-      payload: { id: assistantId, sessionId: state.currentSessionId, role: 'assistant', content: '', timestamp: new Date().toISOString() }
-    })
-
+    const asstMsg: Message = {
+      id: assistantId, sessionId: state.currentSessionId, role: 'assistant',
+      content: '', timestamp: new Date().toISOString()
+    }
+    dispatch({ type: 'ADD_MESSAGE', payload: asstMsg })
     dispatch({ type: 'START_STREAMING', payload: { assistantId } })
 
     window.api.sendMessage({
@@ -196,9 +198,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const c2 = window.api.onChatError((data) => {
       dispatch({ type: 'SET_ERROR', payload: data.error })
     })
-    const c3 = window.api.onChatDone(() => {
+    const c3 = window.api.onChatDone(async () => {
+      // Save the final assistant content before clearing streaming state
+      if (state.streamingAssistantId) {
+        const assistantMsg = state.messages.find(m => m.id === state.streamingAssistantId)
+        if (assistantMsg && assistantMsg.content) {
+          await window.api.appendMessage(state.currentSessionId!, assistantMsg).catch(() => {})
+        }
+      }
       dispatch({ type: 'FINISH_STREAMING' })
-      loadSessions()
+      await loadSessions()
     })
     return () => { c1(); c2(); c3() }
   }, [loadSessions])
