@@ -129,6 +129,9 @@ export function startChat(
   let lastText = ''
 
   pty.onData((data: string) => {
+    // Log raw data AND its hex representation to see control characters
+    const hex = Buffer.from(data.slice(0, 100)).toString('hex')
+    console.log('[claude-manager] HEX first 100 bytes:', hex)
     console.log('[claude-manager] RAW first 500:', JSON.stringify(data.slice(0, 500)))
     buffer += sanitize(data)
     const { objs, rest } = extractObjects(buffer)
