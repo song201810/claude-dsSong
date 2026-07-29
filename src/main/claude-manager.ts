@@ -1,6 +1,7 @@
 // src/main/claude-manager.ts
 import { spawn, IPty } from 'node-pty'
 import { BrowserWindow } from 'electron'
+import { execSync } from 'child_process'
 import {
   type SendMessageParams,
   type ChatTokenEvent,
@@ -20,31 +21,66 @@ interface ActiveProcess {
 
 const activeProcesses = new Map<string, ActiveProcess>()
 
+function isClaudeAvailable(): boolean {
+  try {
+    // Windows: use 'where', Unix: use 'which'
+    const cmd = process.platform === 'win32' ? 'where claude' : 'which claude'
+    execSync(cmd, { stdio: 'ignore' })
+    return true
+  } catch {
+    return false
+  }
+}
+
+function buildPtyArgs(params: SendMessageParams): string[] {
+  // Use -p for single message mode; skip --continue for simplicity in MVP
+  // In production, you'd track conversation context via --continue
+  return [
+    '-p', params.message,
+    '--model', params.model,
+    '--output-format', 'stream-json',
+  ]
+}
+
 export function startChat(
   params: SendMessageParams,
   sender: BrowserWindow
 ): void {
   if (activeProcesses.has(params.sessionId)) {
-    // That session already has an active request, ignore
     return
   }
 
   const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
-  // Build claude CLI command arguments
-  const args = [
-    '-p', params.message,
-    '--model', params.model,
-    '--output-format', 'stream-json',
-  ]
+  // Check if claude CLI is available before spawning
+  if (!isClaudeAvailable()) {
+    const event: ChatErrorEvent = {
+      sessionId: params.sessionId,
+      messageId,
+      error: '未找到 claude 命令。请先安装 Claude Code CLI：npm install -g @anthropic-ai/claude-code',
+    }
+    sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, event)
+    return
+  }
 
-  const pty = spawn('claude', args, {
-    name: 'xterm-256color',
-    cols: 120,
-    rows: 40,
-    cwd: process.cwd(),
-    env: { ...process.env, TERM: 'xterm-256color' },
-  })
+  let pty: IPty
+  try {
+    pty = spawn('claude', buildPtyArgs(params), {
+      name: 'xterm-256color',
+      cols: 120,
+      rows: 40,
+      cwd: process.cwd(),
+      env: { ...process.env, TERM: 'xterm-256color' },
+    })
+  } catch (err) {
+    const event: ChatErrorEvent = {
+      sessionId: params.sessionId,
+      messageId,
+      error: `无法启动 claude 进程: ${err instanceof Error ? err.message : String(err)}`,
+    }
+    sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, event)
+    return
+  }
 
   const proc: ActiveProcess = {
     pty,
