@@ -122,12 +122,12 @@ export function startChat(
     return
   }
 
-  // Build CLI args.  When --resume is requested, drop -p (print mode) in
-  // favour of --resume so Claude loads the prior conversation from
-  // ~/.claude/projects/<hash>/<sessionId>.jsonl.
+  // Build CLI args.
+  // First message:  claude -p "prompt" (single-shot)
+  // Continuation:   claude --resume "prompt"  (no -p, prompt is the first positional arg)
   const args = ['--model', params.model, '--output-format', 'stream-json', '--verbose']
   if (params.resume) {
-    args.push('--resume')
+    args.push('--resume', params.message)
   } else {
     args.push('-p', params.message)
   }
