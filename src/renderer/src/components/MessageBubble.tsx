@@ -6,11 +6,13 @@ import type { Message } from '../../../shared/types'
 
 interface Props {
   message: Message
+  isStreaming: boolean
 }
 
-export default function MessageBubble({ message }: Props) {
+export default function MessageBubble({ message, isStreaming }: Props) {
   const isUser = message.role === 'user'
-  const [thinkingExpanded, setThinkingExpanded] = useState(false)
+  const isEmpty = !message.content
+  const showLoading = !isUser && isEmpty && isStreaming
 
   const content = message.content
 
