@@ -9,8 +9,10 @@ import {
   type ChatTokenEvent,
   type ChatErrorEvent,
   type ChatDoneEvent,
+  type Message,
   IPC_CHANNELS,
 } from '../shared/types'
+import { appendMessage } from './session-store'
 
 interface ActiveProcess {
   pty: IPty
@@ -160,10 +162,33 @@ export function startChat(
       }
 
       if (obj.type === 'result') {
+        // Persist both messages before signaling done
+        const finalText = (obj as any).result || proc.accumulatedText
         sender.webContents.send(IPC_CHANNELS.CHAT_DONE, {
           sessionId: params.sessionId, messageId,
-          fullContent: (obj as any).result || proc.accumulatedText,
+          fullContent: finalText,
         })
+
+        // Persist user message
+        const userMsg: Message = {
+          id: `msg-${Date.now()}-user`,
+          sessionId: params.sessionId,
+          role: 'user',
+          content: params.message,
+          timestamp: new Date().toISOString(),
+        }
+        appendMessage(params.sessionId, userMsg).catch(() => {})
+
+        // Persist assistant message
+        const assistantMsg: Message = {
+          id: messageId,
+          sessionId: params.sessionId,
+          role: 'assistant',
+          content: finalText,
+          timestamp: new Date().toISOString(),
+        }
+        appendMessage(params.sessionId, assistantMsg).catch(() => {})
+
         activeProcesses.delete(params.sessionId)
         return
       }
