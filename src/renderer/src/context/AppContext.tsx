@@ -192,15 +192,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // --- IPC listeners (registered once, uses stateRef to avoid stale closures) ---
   useEffect(() => {
     const c1 = window.api.onChatToken((data) => {
+      console.log('[AppContext] TOKEN:', data.token?.length, 'msgId:', data.messageId)
       dispatch({ type: 'APPEND_TOKEN', payload: { token: data.token, thinking: data.thinking } })
     })
     const c2 = window.api.onChatError((data) => {
+      console.log('[AppContext] ERROR:', data.error)
       dispatch({ type: 'SET_ERROR', payload: data.error })
     })
     const c3 = window.api.onChatDone(async (data) => {
       const cur = stateRef.current
+      console.log('[AppContext] DONE msgId:', data.messageId, 'fullContent len:', data.fullContent?.length, 'msg count:', cur.messages.length)
       const assistantMsg = cur.messages.find(m => m.id === data.messageId)
+      console.log('[AppContext] DONE found:', !!assistantMsg, 'content len:', assistantMsg?.content?.length)
       if (cur.currentSessionId && assistantMsg && assistantMsg.content) {
+        console.log('[AppContext] DONE persisting...')
         await window.api.appendMessage(cur.currentSessionId, assistantMsg).catch(() => {})
       }
       dispatch({ type: 'FINISH_STREAMING' })

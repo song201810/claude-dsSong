@@ -149,6 +149,7 @@ export function startChat(
           const diff = newText.slice(lastText.length)
           lastText = newText
           proc.accumulatedText = newText
+          console.log('[claude-manager] SENDING token diff len:', diff.length, 'total:', newText.length)
           sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, {
             sessionId: params.sessionId, messageId, token: diff,
           })
@@ -156,6 +157,7 @@ export function startChat(
       }
 
       if (obj.type === 'result') {
+        console.log('[claude-manager] DONE, fullContent len:', ((obj as any).result || proc.accumulatedText).length)
         sender.webContents.send(IPC_CHANNELS.CHAT_DONE, {
           sessionId: params.sessionId, messageId,
           fullContent: (obj as any).result || proc.accumulatedText,
