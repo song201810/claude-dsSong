@@ -72,18 +72,22 @@ function cleanControlChars(data: string): string {
     .replace(/\x1b/g, '')
 }
 
-function extractCompleteObjects(buf: string): { objs: Array<Record<string, any>>; rest: string } {
+/**
+ * Parse JSONL from buffer: strip ANSI, split lines, JSON.parse each.
+ * stream-json output guarantees one complete JSON object per line — no
+ * bracket counting needed now that we properly strip control codes.
+ */
+function parseJsonlObjects(buf: string): { objs: Array<Record<string, any>>; rest: string } {
   const objs: Array<Record<string, any>> = []
-  let depth = 0
-  let start = -1
-  for (let i = 0; i < buf.length; i++) {
-    if (buf[i] === '{' && depth++ === 0) { start = i }
-    else if (buf[i] === '}' && --depth === 0 && start >= 0) {
-      try { objs.push(JSON.parse(buf.slice(start, i + 1))) } catch { /* skip */ }
-      start = -1
-    }
+  const lines = buf.split('\n')
+  // Last element may be incomplete — keep it for next chunk
+  const rest = lines.pop() || ''
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed[0] !== '{') continue
+    try { objs.push(JSON.parse(trimmed)) } catch { /* skip */ }
   }
-  return { objs, rest: start >= 0 ? buf.slice(start) : '' }
+  return { objs, rest }
 }
 
 export function startChat(
@@ -130,7 +134,7 @@ export function startChat(
     chunkCount++
     console.log(`[claude-manager] CHUNK #${chunkCount}, raw_len: ${data.length}, buf_before: ${buffer.length}`)
     buffer += cleanControlChars(data)
-    const { objs, rest } = extractCompleteObjects(buffer)
+    const { objs, rest } = parseJsonlObjects(buffer)
     console.log(`[claude-manager] CHUNK #${chunkCount}, objs: ${objs.length}, rest: ${rest.length}`)
     buffer = rest
 
