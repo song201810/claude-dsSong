@@ -6,7 +6,7 @@ import { useAppContext } from '../context/AppContext'
 export default function InputArea() {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const { state, sendMessage, cancelMessage } = useAppContext()
+  const { state, sendMessage } = useAppContext()
 
   if (!state.currentSessionId) return null
 
@@ -24,9 +24,6 @@ export default function InputArea() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
-    }
-    if (e.key === 'Escape' && state.isStreaming) {
-      cancelMessage()
     }
   }
 
@@ -53,25 +50,15 @@ export default function InputArea() {
           rows={1}
           disabled={state.isStreaming}
         />
-        {state.isStreaming ? (
-          <button
-            className="px-5 py-2.5 rounded-2xl bg-[#f0836a]/20 text-[#f0836a] border border-[#f0836a]/30
-                       text-sm transition-all font-medium hover:bg-[#f0836a]/30"
-            onClick={cancelMessage}
-          >
-            停止
-          </button>
-        ) : (
-          <button
-            className="px-5 py-2.5 rounded-2xl bg-[#f0836a] hover:bg-[#e0684e] text-white text-sm
-                       transition-all font-medium disabled:opacity-40 disabled:cursor-not-allowed
-                       shadow-lg shadow-[#f0836a]/20"
-            onClick={handleSend}
-            disabled={!input.trim()}
-          >
-            发送
-          </button>
-        )}
+        <button
+          className="px-5 py-2.5 rounded-2xl bg-[#f0836a] hover:bg-[#e0684e] text-white text-sm
+                     transition-all font-medium disabled:opacity-40 disabled:cursor-not-allowed
+                     shadow-lg shadow-[#f0836a]/20"
+          onClick={handleSend}
+          disabled={!input.trim() || state.isStreaming}
+        >
+          发送
+        </button>
       </div>
       <div className="flex items-center justify-between mt-2 px-1">
         <ModelSelect />
@@ -79,8 +66,6 @@ export default function InputArea() {
           <span><kbd className="px-1 py-0.5 bg-[#332e2b] rounded font-mono text-[10px] text-[#a8a29e]">Enter</kbd> 发送</span>
           <span className="w-px h-3 bg-[#3a3430]" />
           <span><kbd className="px-1 py-0.5 bg-[#332e2b] rounded font-mono text-[10px] text-[#a8a29e]">Shift+Enter</kbd> 换行</span>
-          <span className="w-px h-3 bg-[#3a3430]" />
-          <span><kbd className="px-1 py-0.5 bg-[#332e2b] rounded font-mono text-[10px] text-[#a8a29e]">Esc</kbd> 取消</span>
         </div>
       </div>
     </div>
