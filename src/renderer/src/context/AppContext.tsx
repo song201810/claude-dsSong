@@ -179,6 +179,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     dispatch({ type: 'ADD_MESSAGE', payload: userMessage })
+    // Save user message immediately
+    window.api.appendMessage(state.currentSessionId, userMessage).catch(console.error)
 
     const assistantId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-assistant`
     const assistantPlaceholder: Message = {
@@ -222,6 +224,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const cleanupDone = window.api.onChatDone((data) => {
       console.log('[AppContext] onChatDone, fullContent:', data.fullContent?.slice(0, 50))
+      // Update the assistant placeholder message with final content + persist
+      const msgId = state.streamingMessageId
+      if (msgId) {
+        const idx = state.messages.findIndex(m => m.id === msgId)
+        if (idx >= 0) {
+          const msg = { ...state.messages[idx] }
+          msg.content = data.fullContent || msg.content
+          // Persist the final assistant message
+          window.api.appendMessage(state.currentSessionId!, msg).catch(console.error)
+        }
+      }
       dispatch({ type: 'FINISH_STREAMING' })
       loadSessions()
     })

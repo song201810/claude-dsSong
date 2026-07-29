@@ -4,6 +4,7 @@ import {
   IPC_CHANNELS,
   type SessionSummary,
   type Session,
+  type Message,
   type ModelInfo,
   type Settings,
   type CreateSessionParams,
@@ -26,6 +27,9 @@ const api = {
 
   deleteSession: (id: string): Promise<void> =>
     ipcRenderer.invoke(IPC_CHANNELS.SESSION_DELETE, id),
+
+  appendMessage: (sessionId: string, message: Message): Promise<void> =>
+    ipcRenderer.invoke('session:append-message', sessionId, message),
 
   // === Chat ===
   sendMessage: (params: SendMessageParams): void =>

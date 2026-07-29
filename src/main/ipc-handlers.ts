@@ -1,7 +1,7 @@
 // src/main/ipc-handlers.ts
 import { ipcMain, BrowserWindow, dialog } from 'electron'
 import { IPC_CHANNELS } from '../shared/types'
-import { listSessions, createSession, getSession, deleteSession } from './session-store'
+import { listSessions, createSession, getSession, deleteSession, appendMessage } from './session-store'
 import { getSettings, updateSettings, getModels } from './config-manager'
 import { startChat, cancelChat } from './claude-manager'
 
@@ -21,6 +21,11 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.SESSION_DELETE, async (_, id: string) => {
     await deleteSession(id)
+  })
+
+  // Internal channel for persisting messages from renderer
+  ipcMain.handle('session:append-message', async (_, sessionId: string, message: any) => {
+    await appendMessage(sessionId, message)
   })
 
   // === Chat Control ===
