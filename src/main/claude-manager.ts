@@ -65,8 +65,8 @@ function spawnClaude(args: string[], cwd: string): IPty {
     })
     return spawn(shell, ['/c', 'claude', ...escaped], {
       name: 'xterm-256color',
-      cols: 160,
-      rows: 40,
+      cols: 500,
+      rows: 60,
       cwd,
       env: { ...process.env, TERM: 'xterm-256color' },
     })
