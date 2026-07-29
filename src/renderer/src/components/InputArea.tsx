@@ -73,6 +73,13 @@ export default function InputArea() {
       </div>
       <div className="flex items-center justify-between mt-2 px-1">
         <ModelSelect />
+        <div className="flex items-center gap-3 text-[10px] text-gray-600">
+          <span><kbd className="px-1 py-0.5 bg-[#313338] rounded font-mono text-[10px]">Enter</kbd> 发送</span>
+          <span className="w-px h-3 bg-gray-700" />
+          <span><kbd className="px-1 py-0.5 bg-[#313338] rounded font-mono text-[10px]">Shift+Enter</kbd> 换行</span>
+          <span className="w-px h-3 bg-gray-700" />
+          <span><kbd className="px-1 py-0.5 bg-[#313338] rounded font-mono text-[10px]">Esc</kbd> 取消</span>
+        </div>
       </div>
     </div>
   )
