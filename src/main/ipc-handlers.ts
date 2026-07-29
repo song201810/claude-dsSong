@@ -30,7 +30,9 @@ export function registerIpcHandlers(): void {
 
   // === Chat Control ===
   ipcMain.on(IPC_CHANNELS.CHAT_SEND, (event, params) => {
+    console.log('[ipc-handlers] CHAT_SEND received, sessionId:', params.sessionId)
     const window = BrowserWindow.fromWebContents(event.sender)
+    console.log('[ipc-handlers] window found:', !!window)
     if (!window) return
     startChat(params, window)
   })
