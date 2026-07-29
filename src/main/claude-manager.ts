@@ -161,8 +161,14 @@ export function startChat(
       }
 
       if (obj.type === 'result') {
-        const finalText = (obj as any).result || proc.accumulatedText
-        console.log('[claude-manager] RESULT finalText_len:', finalText.length)
+        // Prefer the accumulated progressive text.  If the CLI sent
+        // multiple assistant messages we already have the full content.
+        // The `result.result` field is a fallback in case the progressive
+        // events were missed (e.g. first token is the full answer).
+        const progressiveText = proc.accumulatedText
+        const resultText = (obj as any).result || ''
+        const finalText = progressiveText || resultText
+        console.log('[claude-manager] RESULT progressiveText_len:', progressiveText.length, 'resultText_len:', resultText.length)
         sender.webContents.send(IPC_CHANNELS.CHAT_DONE, {
           sessionId: params.sessionId, messageId,
           fullContent: finalText,
