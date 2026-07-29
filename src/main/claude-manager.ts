@@ -16,7 +16,7 @@ interface ActiveProcess {
   pty: IPty
   messageId: string
   sessionId: string
-  accumulatedContent: string
+  accumulatedText: string
 }
 
 const activeProcesses = new Map<string, ActiveProcess>()
@@ -27,7 +27,6 @@ function findClaudePath(): string | null {
       try { return execSync('npm prefix -g', { encoding: 'utf-8' }).trim() }
       catch { return null }
     })()
-
     if (npmPrefix) {
       for (const c of [
         join(npmPrefix, 'node_modules', '@anthropic-ai', 'claude-code', 'cli.mjs'),
@@ -36,14 +35,12 @@ function findClaudePath(): string | null {
         if (existsSync(c)) return c
       }
     }
-
     try {
       const result = execSync('where claude', { encoding: 'utf-8' }).trim()
       const lines = result.split('\n').map(l => l.trim()).filter(Boolean)
       if (lines.length > 0) return lines[0]
     } catch { /* fallthrough */ }
   }
-
   try {
     return execSync('which claude', { encoding: 'utf-8' }).trim() || null
   } catch {
@@ -53,95 +50,59 @@ function findClaudePath(): string | null {
 
 function spawnClaude(args: string[], cwd: string): IPty {
   if (process.platform === 'win32') {
-    const escaped = args.map(a => {
-      if (/\s/.test(a) || a.includes('"')) return `"${a.replace(/"/g, '\\"')}"`
-      return a
-    })
-    return spawn('cmd.exe', ['/c', 'claude', ...escaped], {
-      name: 'xterm-256color',
-      cols: 500,
-      rows: 80,
-      cwd,
+    return spawn('cmd.exe', ['/c', 'claude', ...args.map(a =>
+      /\s/.test(a) || a.includes('"') ? `"${a.replace(/"/g, '\\"')}"` : a
+    )], {
+      name: 'xterm-256color', cols: 200, rows: 40, cwd,
       env: { ...process.env, TERM: 'xterm-256color' },
     })
   }
-
   return spawn('claude', args, {
-    name: 'xterm-256color',
-    cols: 500,
-    rows: 80,
-    cwd,
+    name: 'xterm-256color', cols: 200, rows: 40, cwd,
     env: { ...process.env, TERM: 'xterm-256color' },
   })
 }
 
-/**
- * Raw ANSI cleaner: strip terminal control sequences
- */
-function stripAnsi(s: string): string {
-  return s
-    .replace(/\x1b\]0;.*?\x07/g, '')   // OSC title seq (e.g. `ESC]0;claude BEL`)
-    .replace(/\x1b\]8;[^\x07]*\x07/g, '') // OSC hyperlink
-    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '') // CSI sequences (color, cursor, etc.)
-    .replace(/\x1b\[\?[0-9;]*[hl]/g, '')   // DEC private modes
-    .replace(/\x1b[=()>]/g, '')
-    .replace(/\r/g, '')
-    .replace(/[\x00-\x08\x0e-\x1f]/g, '')  // remaining control chars except \n (0x0a)
+/** Strip ANSI/terminal control sequences and CR */
+function sanitize(data: string): string {
+  return data
+    .replace(/\x1b\][^\x07]*\x07/g, '')
+    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+    .replace(/\x1b\[\?[0-9;]*[hl]/g, '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '')
 }
 
-/**
- * Try to parse complete JSON objects from the buffer using bracket-depth scanning
- * instead of line-splitting (which breaks when pty cols wrap long lines).
- */
-function extractJsonObjects(buffer: string): { objects: unknown[]; rest: string } {
-  const objects: unknown[] = []
+/** Extract complete JSON objects from mixed text.
+ *  CLIs may print the JSONL line as-is OR they may inject carriage returns +
+ *  artificial linebreaks because terminal output is column-limited.  We
+ *  scan for `{...}` boundaries, not for newlines. */
+function extractObjects(buffer: string): { objs: Array<Record<string, any>>; rest: string } {
+  const objs: Array<Record<string, any>> = []
   let depth = 0
   let start = -1
-
   for (let i = 0; i < buffer.length; i++) {
-    const ch = buffer[i]
-    if (depth === 0) {
-      if (ch === '{') {
-        depth = 1
-        start = i
-      }
-      continue
-    }
-
-    if (ch === '{') depth++
-    else if (ch === '}') {
-      depth--
-      if (depth === 0 && start >= 0) {
-        try {
-          objects.push(JSON.parse(buffer.slice(start, i + 1)))
-        } catch {
-          // skip corrupt chunk
-        }
-        start = -1
-      }
+    if (buffer[i] === '{' && depth++ === 0) { start = i }
+    else if (buffer[i] === '}' && --depth === 0 && start >= 0) {
+      try { objs.push(JSON.parse(buffer.slice(start, i + 1))) } catch { /* skip */ }
+      start = -1
     }
   }
-
-  return {
-    objects,
-    rest: start >= 0 ? buffer.slice(start) : ''
-  }
+  return { objs, rest: start >= 0 ? buffer.slice(start) : '' }
 }
 
 export function startChat(
   params: SendMessageParams,
   sender: BrowserWindow
 ): void {
-  if (activeProcesses.has(params.sessionId)) {
-    return
-  }
+  if (activeProcesses.has(params.sessionId)) return
 
   const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
   if (!findClaudePath()) {
     sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, {
       sessionId: params.sessionId, messageId,
-      error: '未找到 claude 命令。请先安装 Claude Code CLI：npm install -g @anthropic-ai/claude-code',
+      error: '未找到 claude 命令。请先安装 Claude Code CLI',
     })
     return
   }
@@ -150,9 +111,7 @@ export function startChat(
                  '--output-format', 'stream-json', '--verbose']
 
   let pty: IPty
-  try {
-    pty = spawnClaude(args, process.cwd())
-  } catch (err) {
+  try { pty = spawnClaude(args, process.cwd()) } catch (err) {
     sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, {
       sessionId: params.sessionId, messageId,
       error: `无法启动 claude 进程: ${err instanceof Error ? err.message : String(err)}`,
@@ -161,54 +120,49 @@ export function startChat(
   }
 
   const proc: ActiveProcess = {
-    pty, messageId, sessionId: params.sessionId,
-    accumulatedContent: '',
+    pty, messageId, sessionId: params.sessionId, accumulatedText: '',
   }
   activeProcesses.set(params.sessionId, proc)
 
   let buffer = ''
-  let lastText = ''  // track progressive assistant text for diff
+  let lastText = ''
 
   pty.onData((raw: string) => {
-    buffer += stripAnsi(raw)
-    const { objects, rest } = extractJsonObjects(buffer)
+    buffer += sanitize(raw)
+    const { objs, rest } = extractObjects(buffer)
     buffer = rest
 
-    for (const obj of objects) {
-      const parsed = obj as Record<string, any>
-      if (parsed.type === 'system') continue
+    for (const obj of objs) {
+      if (obj.type === 'system') continue
 
-      if (parsed.type === 'error' || parsed.is_error) {
+      if (obj.type === 'error' || obj.is_error) {
         sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, {
           sessionId: params.sessionId, messageId,
-          error: parsed.error?.message || parsed.result || 'Claude 返回错误',
+          error: obj.error?.message || obj.result || 'Claude 返回错误',
         })
         return
       }
 
-      // Progressive assistant message — diff against last seen
-      if (parsed.type === 'assistant' && parsed.message?.content) {
+      // Progressive assistant message: diff against previous
+      if (obj.type === 'assistant' && obj.message?.content) {
         let newText = ''
-        for (const block of parsed.message.content) {
+        for (const block of obj.message.content) {
           if (block.type === 'text' && block.text) newText += block.text
         }
         if (newText.length > lastText.length) {
           const diff = newText.slice(lastText.length)
           lastText = newText
-          proc.accumulatedContent = newText
-          if (diff) {
-            sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, {
-              sessionId: params.sessionId, messageId, token: diff,
-            })
-          }
+          proc.accumulatedText = newText
+          sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, {
+            sessionId: params.sessionId, messageId, token: diff,
+          })
         }
       }
 
-      // Done
-      if (parsed.type === 'result') {
+      if (obj.type === 'result') {
         sender.webContents.send(IPC_CHANNELS.CHAT_DONE, {
           sessionId: params.sessionId, messageId,
-          fullContent: (parsed as any).result || proc.accumulatedContent,
+          fullContent: (obj as any).result || proc.accumulatedText,
         })
         activeProcesses.delete(params.sessionId)
         return
@@ -220,7 +174,7 @@ export function startChat(
     if (activeProcesses.has(params.sessionId)) {
       sender.webContents.send(IPC_CHANNELS.CHAT_DONE, {
         sessionId: params.sessionId, messageId,
-        fullContent: proc.accumulatedContent,
+        fullContent: proc.accumulatedText,
       })
       activeProcesses.delete(params.sessionId)
     }
