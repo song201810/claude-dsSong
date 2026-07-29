@@ -17,7 +17,6 @@ interface ActiveProcess {
   messageId: string
   sessionId: string
   accumulatedContent: string
-  accumulatedThinking: string
 }
 
 const activeProcesses = new Map<string, ActiveProcess>()
@@ -30,11 +29,10 @@ function findClaudePath(): string | null {
     })()
 
     if (npmPrefix) {
-      const candidates = [
+      for (const c of [
         join(npmPrefix, 'node_modules', '@anthropic-ai', 'claude-code', 'cli.mjs'),
         join(npmPrefix, 'claude.cmd'),
-      ]
-      for (const c of candidates) {
+      ]) {
         if (existsSync(c)) return c
       }
     }
@@ -54,19 +52,15 @@ function findClaudePath(): string | null {
 }
 
 function spawnClaude(args: string[], cwd: string): IPty {
-  const shell = process.platform === 'win32' ? 'cmd.exe' : (process.env.SHELL || '/bin/sh')
-
   if (process.platform === 'win32') {
     const escaped = args.map(a => {
-      if (/\s/.test(a) || a.includes('"')) {
-        return `"${a.replace(/"/g, '\\"')}"`
-      }
+      if (/\s/.test(a) || a.includes('"')) return `"${a.replace(/"/g, '\\"')}"`
       return a
     })
-    return spawn(shell, ['/c', 'claude', ...escaped], {
+    return spawn('cmd.exe', ['/c', 'claude', ...escaped], {
       name: 'xterm-256color',
-      cols: 999,
-      rows: 40,
+      cols: 500,
+      rows: 80,
       cwd,
       env: { ...process.env, TERM: 'xterm-256color' },
     })
@@ -74,11 +68,64 @@ function spawnClaude(args: string[], cwd: string): IPty {
 
   return spawn('claude', args, {
     name: 'xterm-256color',
-    cols: 160,
-    rows: 40,
+    cols: 500,
+    rows: 80,
     cwd,
     env: { ...process.env, TERM: 'xterm-256color' },
   })
+}
+
+/**
+ * Raw ANSI cleaner: strip terminal control sequences
+ */
+function stripAnsi(s: string): string {
+  return s
+    .replace(/\x1b\]0;.*?\x07/g, '')   // OSC title seq (e.g. `ESC]0;claude BEL`)
+    .replace(/\x1b\]8;[^\x07]*\x07/g, '') // OSC hyperlink
+    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '') // CSI sequences (color, cursor, etc.)
+    .replace(/\x1b\[\?[0-9;]*[hl]/g, '')   // DEC private modes
+    .replace(/\x1b[=()>]/g, '')
+    .replace(/\r/g, '')
+    .replace(/[\x00-\x08\x0e-\x1f]/g, '')  // remaining control chars except \n (0x0a)
+}
+
+/**
+ * Try to parse complete JSON objects from the buffer using bracket-depth scanning
+ * instead of line-splitting (which breaks when pty cols wrap long lines).
+ */
+function extractJsonObjects(buffer: string): { objects: unknown[]; rest: string } {
+  const objects: unknown[] = []
+  let depth = 0
+  let start = -1
+
+  for (let i = 0; i < buffer.length; i++) {
+    const ch = buffer[i]
+    if (depth === 0) {
+      if (ch === '{') {
+        depth = 1
+        start = i
+      }
+      continue
+    }
+
+    if (ch === '{') depth++
+    else if (ch === '}') {
+      depth--
+      if (depth === 0 && start >= 0) {
+        try {
+          objects.push(JSON.parse(buffer.slice(start, i + 1)))
+        } catch {
+          // skip corrupt chunk
+        }
+        start = -1
+      }
+    }
+  }
+
+  return {
+    objects,
+    rest: start >= 0 ? buffer.slice(start) : ''
+  }
 }
 
 export function startChat(
@@ -91,151 +138,90 @@ export function startChat(
 
   const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
-  const claudePath = findClaudePath()
-  if (!claudePath) {
-    const event: ChatErrorEvent = {
-      sessionId: params.sessionId,
-      messageId,
+  if (!findClaudePath()) {
+    sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, {
+      sessionId: params.sessionId, messageId,
       error: '未找到 claude 命令。请先安装 Claude Code CLI：npm install -g @anthropic-ai/claude-code',
-    }
-    sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, event)
+    })
     return
   }
 
-  // Use --max-json-line 0 to disable line truncation
-  const args = [
-    '-p', params.message,
-    '--model', params.model,
-    '--output-format', 'stream-json',
-    '--no-formatting',           // skip ANSI entirely
-    '--max-json-line', '0',      // no line wrapping (0 = unlimited)
-    '--verbose',
-  ]
+  const args = ['-p', params.message, '--model', params.model,
+                 '--output-format', 'stream-json', '--verbose']
 
   let pty: IPty
   try {
     pty = spawnClaude(args, process.cwd())
   } catch (err) {
-    const event: ChatErrorEvent = {
-      sessionId: params.sessionId,
-      messageId,
+    sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, {
+      sessionId: params.sessionId, messageId,
       error: `无法启动 claude 进程: ${err instanceof Error ? err.message : String(err)}`,
-    }
-    sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, event)
+    })
     return
   }
 
   const proc: ActiveProcess = {
-    pty,
-    messageId,
-    sessionId: params.sessionId,
+    pty, messageId, sessionId: params.sessionId,
     accumulatedContent: '',
-    accumulatedThinking: '',
   }
-
   activeProcesses.set(params.sessionId, proc)
 
   let buffer = ''
-
-  function clean(data: string): string {
-    return data
-      .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-      .replace(/\x1b\][^\x07]*\x07/g, '')
-      .replace(/\r/g, '')       // strip CR (carriage return)
-      .replace(/\x1b\[\?[0-9;]*[hl]/g, '')  // DEC private mode sequences
-  }
-
-  function extractParts(blocks: Array<{ type: string; text?: string; thinking?: string }>): { text: string; thinking: string } {
-    let text = ''
-    let thinking = ''
-    for (const block of blocks) {
-      if (block.type === 'text' && block.text) text += block.text
-      else if (block.type === 'thinking' && block.thinking) thinking += block.thinking
-    }
-    return { text, thinking }
-  }
+  let lastText = ''  // track progressive assistant text for diff
 
   pty.onData((raw: string) => {
-    // Filter ANSI + control characters
-    const cleaned = raw
-      .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-      .replace(/\x1b\][^\x07]*\x07/g, '')
-      .replace(/\x1b\[\?[0-9;]*[hl]/g, '')
-      .replace(/\r/g, '')
-      .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '')  // strip remaining control chars
-    buffer += cleaned
-    const lines = buffer.split('\n')
-    buffer = lines.pop() || ''
+    buffer += stripAnsi(raw)
+    const { objects, rest } = extractJsonObjects(buffer)
+    buffer = rest
 
-    for (const line of lines) {
-      if (!line.trim()) continue
+    for (const obj of objects) {
+      const parsed = obj as Record<string, any>
+      if (parsed.type === 'system') continue
 
-      try {
-        const parsed = JSON.parse(line)
-        console.log('[claude-manager] type:', parsed.type)
-        if (parsed.type === 'system') continue
+      if (parsed.type === 'error' || parsed.is_error) {
+        sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, {
+          sessionId: params.sessionId, messageId,
+          error: parsed.error?.message || parsed.result || 'Claude 返回错误',
+        })
+        return
+      }
 
-        if (parsed.type === 'error' || parsed.is_error) {
-          console.log('[claude-manager] ERROR')
-          const evt: ChatErrorEvent = {
-            sessionId: params.sessionId,
-            messageId,
-            error: parsed.error?.message || parsed.result || 'Claude 返回错误',
-          }
-          sender.webContents.send(IPC_CHANNELS.CHAT_ERROR, evt)
-          return
+      // Progressive assistant message — diff against last seen
+      if (parsed.type === 'assistant' && parsed.message?.content) {
+        let newText = ''
+        for (const block of parsed.message.content) {
+          if (block.type === 'text' && block.text) newText += block.text
         }
-
-        if (parsed.type === 'assistant' && parsed.message?.content) {
-          const { text, thinking } = extractParts(parsed.message.content)
-          let diff = ''
-          if (text.length > proc.accumulatedContent.length) {
-            diff = text.slice(proc.accumulatedContent.length)
-            proc.accumulatedContent = text
-          }
-          const newThinking = thinking.slice(proc.accumulatedThinking.length)
-          if (newThinking) proc.accumulatedThinking = thinking
-
+        if (newText.length > lastText.length) {
+          const diff = newText.slice(lastText.length)
+          lastText = newText
+          proc.accumulatedContent = newText
           if (diff) {
-            console.log('[claude-manager] SENDING token, len:', diff.length, 'total:', proc.accumulatedContent.length)
-            const evt: ChatTokenEvent = {
-              sessionId: params.sessionId,
-              messageId,
-              token: diff,
-              thinking: proc.accumulatedThinking || undefined,
-            }
-            sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, evt)
+            sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, {
+              sessionId: params.sessionId, messageId, token: diff,
+            })
           }
         }
+      }
 
-        if (parsed.type === 'result') {
-          console.log('[claude-manager] DONE')
-          const evt: ChatDoneEvent = {
-            sessionId: params.sessionId,
-            messageId,
-            fullContent: (parsed as any).result || proc.accumulatedContent,
-          }
-          sender.webContents.send(IPC_CHANNELS.CHAT_DONE, evt)
-          activeProcesses.delete(params.sessionId)
-          return
-        }
-      } catch (e) {
-        // Print raw line that failed to parse for debugging
-        if (line.trim()) {
-          console.log('[claude-manager] PARSE FAIL, raw line head:', JSON.stringify(line.slice(0, 120)))
-        }
+      // Done
+      if (parsed.type === 'result') {
+        sender.webContents.send(IPC_CHANNELS.CHAT_DONE, {
+          sessionId: params.sessionId, messageId,
+          fullContent: (parsed as any).result || proc.accumulatedContent,
+        })
+        activeProcesses.delete(params.sessionId)
+        return
       }
     }
   })
 
   pty.onExit(() => {
     if (activeProcesses.has(params.sessionId)) {
-      const evt: ChatDoneEvent = {
-        sessionId: params.sessionId,
-        messageId,
+      sender.webContents.send(IPC_CHANNELS.CHAT_DONE, {
+        sessionId: params.sessionId, messageId,
         fullContent: proc.accumulatedContent,
-      }
-      sender.webContents.send(IPC_CHANNELS.CHAT_DONE, evt)
+      })
       activeProcesses.delete(params.sessionId)
     }
   })
