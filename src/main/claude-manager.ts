@@ -153,6 +153,7 @@ export function startChat(
 
   child.stdout!.on('data', (data: Buffer) => {
     buffer += stripAnsi(data.toString('utf-8'))
+    console.log('[claude-manager] RAW chunk len:', data.length, 'first 300:', JSON.stringify(data.toString('utf-8').slice(0, 300)))
     const { objs, rest } = parseJsonlLines(buffer)
     buffer = rest
 
