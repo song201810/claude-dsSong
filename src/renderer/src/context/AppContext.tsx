@@ -207,6 +207,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       dispatch({ type: 'FINISH_STREAMING' })
       await loadSessions()
+      // Auto-focus the input area after response completes
+      setTimeout(() => {
+        const textarea = document.querySelector('textarea') as HTMLTextAreaElement | null
+        textarea?.focus()
+      }, 50)
     })
     return () => { c1(); c2(); c3() }
   }, [loadSessions])
