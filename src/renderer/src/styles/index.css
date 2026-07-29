@@ -1,24 +1,7 @@
-/* Tailwind CSS 4 */
+/* Tailwind CSS 4 — warm theme (default) */
 @import "tailwindcss";
 
-/* Warm dark theme palette
-   --bg-root:   #1c1917 (warm stone)
-   --bg-side:   #231f1d (sidebar, slightly lighter)
-   --bg-main:   #1c1917 (main area)
-   --bg-card:   #292524 (cards, bubbles)
-   --bg-input:  #332e2b (input, code headers)
-   --bg-hover:  #383230 (hover states)
-   --bg-active: #44403c (active/selected)
-   --accent:    #f0836a (coral)
-   --accent-hv: #e0684e (coral darker)
-   --fg-primary:#faf7f2 (white)
-   --fg-muted:  #a8a29e (muted text)
-   --fg-dim:    #6b6560 (dim text)
-   --border:    #3a3430 (borders)
-   --error:     #f87171 (red)
-   --code-bg:   #1e1b19 (code area)
-*/
-
+/* warm dark theme palette */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #44403c; border-radius: 3px; }
