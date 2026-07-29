@@ -122,10 +122,15 @@ export function startChat(
     return
   }
 
-  // --resume requires --continue, not -p
-  const args = params.resume
-    ? ['--continue', params.message, '--model', params.model, '--output-format', 'stream-json', '--verbose']
-    : ['-p', params.message, '--model', params.model, '--output-format', 'stream-json', '--verbose']
+  // Base args shared between -p (first message) and --continue (follow-up)
+  const args = ['--model', params.model, '--output-format', 'stream-json', '--verbose']
+  if (params.resume) {
+    // --continue loads the last session.  Prompt is passed as the first
+    // positional argument (no -p flag).
+    args.push('--continue', params.message)
+  } else {
+    args.push('-p', params.message)
+  }
 
   const child = spawnClaudeProc(args, params.workDir || process.cwd())
   child.on('error', (err) => {
