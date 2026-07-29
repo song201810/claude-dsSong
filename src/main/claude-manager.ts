@@ -63,28 +63,6 @@ function spawnClaude(args: string[], cwd: string): IPty {
   })
 }
 
-/** Strip all ANSI/terminal control sequences.
- *  Order matters — DEC private modes (with '?' or '>' prefix) must be handled
- *  BEFORE the generic CSI regex otherwise they are missed. */
-function stripControlChars(data: string): string {
-  return data
-    // DEC private sequences: ESC [ ? ... h/l, ESC [ > ... m, etc.
-    .replace(/\x1b\[[\?>]?[0-9;]*[a-zA-Z]/g, '')
-    // OSC (Operating System Command): ESC ] ... BEL or ESC ] ... ESC \
-    .replace(/\x1b\][^\x07]*\x07/g, '')
-    .replace(/\x1b\][^\x1b]*\x1b\\/g, '')
-    // Cursor visibility and other short ESC + char sequences
-    .replace(/\x1b\[[0-9;]*[mhlJK]/g, '')
-    // Carriage returns → newlines
-    .replace(/\r\n?/g, '\n')
-    // Remaining low control chars (keep \n = 0x0a)
-    .replace(/[\x00-\x09\x0b\x0c\x0e-\x1f]/g, '')
-    // Blank the title bar OSC escapes that got truncated
-    .replace(/\x1b\][^;]*\x07?/g, '')
-    // Any stray ESC that survived
-    .replace(/\x1b/g, '')
-}
-
 /** Extract complete JSON objects from a mixed text stream by tracking `{}` depth */
 function extractCompleteObjects(buf: string): { objs: Array<Record<string, any>>; rest: string } {
   const objs: Array<Record<string, any>> = []
