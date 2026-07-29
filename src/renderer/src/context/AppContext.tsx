@@ -1,5 +1,5 @@
 // src/renderer/src/context/AppContext.tsx
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react'
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react'
 import type { SessionSummary, Message, ModelInfo } from '../../../shared/types'
 
 // ============ State ============
@@ -79,8 +79,8 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         isStreaming: false,
-        streamingAssistantId: null,
         error: null,
+        // NOTE: keep streamingAssistantId so onChatDone can use it to find the message
       }
     case 'SET_ERROR':
       return { ...state, error: action.payload, isStreaming: false }
@@ -117,6 +117,8 @@ const AppContext = createContext<AppContextType | null>(null)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
+  const stateRef = useRef(state)
+  stateRef.current = state  // always reflects latest state for closures
 
   const loadSessions = useCallback(async () => {
     const sessions = await window.api.listSessions()
@@ -136,9 +138,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const createSession = useCallback(async (name: string, workDir: string) => {
     const session = await window.api.createSession({
-      name,
-      workDir,
-      model: state.currentModel,
+      name, workDir, model: state.currentModel,
     })
     await loadSessions()
     dispatch({ type: 'SET_CURRENT_SESSION', payload: session.id })
@@ -151,49 +151,47 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const sendMessage = useCallback((content: string) => {
-    if (!state.currentSessionId || state.isStreaming) return
+    const cur = stateRef.current
+    if (!cur.currentSessionId || cur.isStreaming) return
 
     const userMsgId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const assistantId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-asst`
 
-    // Add user message + persist immediately
+    // User message
     const userMsg: Message = {
-      id: userMsgId, sessionId: state.currentSessionId, role: 'user',
-      content, timestamp: new Date().toISOString()
+      id: userMsgId, sessionId: cur.currentSessionId, role: 'user',
+      content, timestamp: new Date().toISOString(),
     }
     dispatch({ type: 'ADD_MESSAGE', payload: userMsg })
-    window.api.appendMessage(state.currentSessionId, userMsg).catch(() => {})
+    window.api.appendMessage(cur.currentSessionId, userMsg).catch(() => {})
 
-    // Add empty assistant placeholder
+    // Assistant placeholder
     const asstMsg: Message = {
-      id: assistantId, sessionId: state.currentSessionId, role: 'assistant',
-      content: '', timestamp: new Date().toISOString()
+      id: assistantId, sessionId: cur.currentSessionId, role: 'assistant',
+      content: '', timestamp: new Date().toISOString(),
     }
     dispatch({ type: 'ADD_MESSAGE', payload: asstMsg })
     dispatch({ type: 'START_STREAMING', payload: { assistantId } })
 
     window.api.sendMessage({
-      sessionId: state.currentSessionId,
-      message: content,
-      model: state.currentModel,
+      sessionId: cur.currentSessionId, message: content, model: cur.currentModel,
     })
-  }, [state.currentSessionId, state.currentModel, state.isStreaming])
+  }, [])  // no stale deps — uses stateRef
 
   const cancelMessage = useCallback(() => {
-    if (state.currentSessionId) {
-      window.api.cancelChat(state.currentSessionId)
-    }
-  }, [state.currentSessionId])
+    const cur = stateRef.current
+    if (cur.currentSessionId) window.api.cancelChat(cur.currentSessionId)
+  }, [])
 
   const loadModels = useCallback(async () => {
     const models = await window.api.getModels()
     dispatch({ type: 'SET_MODELS', payload: models })
   }, [])
 
-  // Listen for IPC events from main process
+  // --- IPC listeners (registered once, uses stateRef to avoid stale closures) ---
   useEffect(() => {
     const c1 = window.api.onChatToken((data) => {
-      console.log('[AppContext] TOKEN len', data.token.length, 'assistantId', state.streamingAssistantId)
+      console.log('[AppContext] TOKEN len', data.token.length)
       dispatch({ type: 'APPEND_TOKEN', payload: { token: data.token, thinking: data.thinking } })
     })
     const c2 = window.api.onChatError((data) => {
@@ -201,14 +199,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'SET_ERROR', payload: data.error })
     })
     const c3 = window.api.onChatDone(async () => {
-      console.log('[AppContext] DONE, streamingAssistantId:', state.streamingAssistantId)
-      const msgs = state.messages
-      const assistantMsg = msgs.find(m => m.id === state.streamingAssistantId)
+      const cur = stateRef.current
+      console.log('[AppContext] DONE, streamingAssistantId:', cur.streamingAssistantId, 'msg count:', cur.messages.length)
+      const assistantMsg = cur.messages.find(m => m.id === cur.streamingAssistantId)
       console.log('[AppContext] DONE assistantMsg found:', !!assistantMsg, 'content len:', assistantMsg?.content?.length)
-      if (assistantMsg && assistantMsg.content) {
-        console.log('[AppContext] DONE persisting assistant msg...')
+      if (cur.currentSessionId && assistantMsg && assistantMsg.content) {
+        console.log('[AppContext] DONE persisting assistant msg, sessionId:', cur.currentSessionId)
         try {
-          await window.api.appendMessage(state.currentSessionId!, assistantMsg)
+          await window.api.appendMessage(cur.currentSessionId, assistantMsg)
           console.log('[AppContext] DONE persist OK')
         } catch (e) { console.log('[AppContext] DONE persist FAIL:', e) }
       }
