@@ -1,8 +1,9 @@
 // src/main/ipc-handlers.ts
-import { ipcMain } from 'electron'
+import { ipcMain, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '../shared/types'
 import { listSessions, createSession, getSession, deleteSession } from './session-store'
 import { getSettings, updateSettings, getModels } from './config-manager'
+import { startChat, cancelChat } from './claude-manager'
 
 export function registerIpcHandlers(): void {
   // === Session Management ===
@@ -23,13 +24,14 @@ export function registerIpcHandlers(): void {
   })
 
   // === Chat Control ===
-  // NOTE: chat:send and chat:cancel are implemented when Claude Manager is created
-  ipcMain.on(IPC_CHANNELS.CHAT_SEND, (_event, _params) => {
-    // TODO: Implement when Claude Manager is ready
+  ipcMain.on(IPC_CHANNELS.CHAT_SEND, (event, params) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (!window) return
+    startChat(params, window)
   })
 
-  ipcMain.on(IPC_CHANNELS.CHAT_CANCEL, (_event, _sessionId: string) => {
-    // TODO: Implement when Claude Manager is ready
+  ipcMain.on(IPC_CHANNELS.CHAT_CANCEL, (_, sessionId: string) => {
+    cancelChat(sessionId)
   })
 
   // === Configuration ===
