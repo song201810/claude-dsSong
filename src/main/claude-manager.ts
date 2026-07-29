@@ -53,39 +53,39 @@ function spawnClaude(args: string[], cwd: string): IPty {
     return spawn('cmd.exe', ['/c', 'claude', ...args.map(a =>
       /\s/.test(a) || a.includes('"') ? `"${a.replace(/"/g, '\\"')}"` : a
     )], {
-      name: 'xterm-256color', cols: 200, rows: 40, cwd,
+      name: 'xterm-256color', cols: 999, rows: 40, cwd,
       env: { ...process.env, TERM: 'xterm-256color' },
     })
   }
   return spawn('claude', args, {
-    name: 'xterm-256color', cols: 200, rows: 40, cwd,
+    name: 'xterm-256color', cols: 999, rows: 40, cwd,
     env: { ...process.env, TERM: 'xterm-256color' },
   })
 }
 
-function cleanControlChars(data: string): string {
+/**
+ * Strip all ANSI/terminal control sequences.
+ * Claude Code CLI's pty output is a clean JSONL stream with ANSI codes
+ * injected by the terminal layer.  Strip so that each physical line is
+ * one complete JSON object.
+ */
+function cleanPtyOutput(data: string): string {
   return data
-    .replace(/\x1b\[[\?>]?[0-9;]*[a-zA-Z]/g, '')
-    .replace(/\x1b\][^\x07\x1b]*\x07?/g, '')
+    .replace(/\x1b\[[\?>]?[0-9;]*[a-zA-Z]/g, '')   // CSI / DEC private modes
+    .replace(/\x1b\][^\x07\x1b]*\x07?/g, '')         // OSC sequences
     .replace(/\r\n?/g, '\n')
     .replace(/[\x00-\x09\x0b\x0c\x0e-\x1f]/g, '')
-    .replace(/\x1b/g, '')
+    .replace(/\x1b/g, '')                              // any stray ESC
 }
 
-/**
- * Parse JSONL from buffer: strip ANSI, split lines, JSON.parse each.
- * stream-json output guarantees one complete JSON object per line — no
- * bracket counting needed now that we properly strip control codes.
- */
-function parseJsonlObjects(buf: string): { objs: Array<Record<string, any>>; rest: string } {
+function parseJsonlLines(buf: string): { objs: Array<Record<string, any>>; rest: string } {
   const objs: Array<Record<string, any>> = []
   const lines = buf.split('\n')
-  // Last element may be incomplete — keep it for next chunk
   const rest = lines.pop() || ''
   for (const line of lines) {
     const trimmed = line.trim()
     if (!trimmed || trimmed[0] !== '{') continue
-    try { objs.push(JSON.parse(trimmed)) } catch { /* skip */ }
+    try { objs.push(JSON.parse(trimmed)) } catch { /* skip corrupt line */ }
   }
   return { objs, rest }
 }
@@ -94,7 +94,6 @@ export function startChat(
   params: SendMessageParams,
   sender: BrowserWindow
 ): void {
-  console.log('[claude-manager] startChat called, session:', params.sessionId, 'model:', params.model)
   if (activeProcesses.has(params.sessionId)) return
 
   const messageId = params.assistantMessageId || `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -109,7 +108,6 @@ export function startChat(
 
   const args = ['-p', params.message, '--model', params.model,
                  '--output-format', 'stream-json', '--verbose']
-  console.log('[claude-manager] spawning claude with args:', args.join(' '))
 
   let pty: IPty
   try { pty = spawnClaude(args, process.cwd()) } catch (err) {
@@ -119,7 +117,6 @@ export function startChat(
     })
     return
   }
-  console.log('[claude-manager] pty spawned, pid:', (pty as any).pid)
 
   const proc: ActiveProcess = {
     pty, messageId, sessionId: params.sessionId, accumulatedText: '',
@@ -128,19 +125,13 @@ export function startChat(
 
   let buffer = ''
   let lastText = ''
-  let chunkCount = 0
 
   pty.onData((data: string) => {
-    chunkCount++
-    console.log(`[claude-manager] CHUNK #${chunkCount}, raw_len: ${data.length}, buf_before: ${buffer.length}`)
-    buffer += cleanControlChars(data)
-    const { objs, rest } = parseJsonlObjects(buffer)
-    console.log(`[claude-manager] CHUNK #${chunkCount}, objs: ${objs.length}, rest: ${rest.length}`)
+    buffer += cleanPtyOutput(data)
+    const { objs, rest } = parseJsonlLines(buffer)
     buffer = rest
 
     for (const obj of objs) {
-      console.log('[claude-manager]  obj type:', obj.type)
-
       if (obj.type === 'system') continue
 
       if (obj.type === 'error' || obj.is_error) {
@@ -151,17 +142,16 @@ export function startChat(
         return
       }
 
+      // Progressive assistant message — diff against previous
       if (obj.type === 'assistant' && obj.message?.content) {
         let newText = ''
         for (const block of obj.message.content) {
           if (block.type === 'text' && block.text) newText += block.text
         }
-        console.log(`[claude-manager]  assistant text_len: ${newText.length}, lastText: ${lastText.length}`)
         if (newText.length > lastText.length) {
           const diff = newText.slice(lastText.length)
           lastText = newText
           proc.accumulatedText = newText
-          console.log(`[claude-manager]  SENDING token, diff_len: ${diff.length}`)
           sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, {
             sessionId: params.sessionId, messageId, token: diff,
           })
@@ -169,11 +159,9 @@ export function startChat(
       }
 
       if (obj.type === 'result') {
-        const finalText = (obj as any).result || proc.accumulatedText
-        console.log(`[claude-manager]  DONE, finalText_len: ${finalText.length}`)
         sender.webContents.send(IPC_CHANNELS.CHAT_DONE, {
           sessionId: params.sessionId, messageId,
-          fullContent: finalText,
+          fullContent: (obj as any).result || proc.accumulatedText,
         })
         activeProcesses.delete(params.sessionId)
         return
