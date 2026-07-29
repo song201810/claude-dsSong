@@ -135,7 +135,11 @@ export function startChat(
   let buffer = ''
 
   function clean(data: string): string {
-    return data.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\x1b\][^\x07]*\x07/g, '')
+    return data
+      .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+      .replace(/\x1b\][^\x07]*\x07/g, '')
+      .replace(/\r/g, '')       // strip CR (carriage return)
+      .replace(/\x1b\[\?[0-9;]*[hl]/g, '')  // DEC private mode sequences
   }
 
   function extractParts(blocks: Array<{ type: string; text?: string; thinking?: string }>): { text: string; thinking: string } {
@@ -205,7 +209,12 @@ export function startChat(
           activeProcesses.delete(params.sessionId)
           return
         }
-      } catch { /* non-JSON lines */ }
+      } catch (e) {
+        // DEBUG: print lines that fail to parse
+        if (line.trim() && line.trim().startsWith('{')) {
+          console.log('[claude-manager] PARSE FAIL, line head:', line.slice(0, 80))
+        }
+      }
     }
   })
 
