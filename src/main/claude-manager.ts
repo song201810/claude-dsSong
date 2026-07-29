@@ -127,11 +127,14 @@ export function startChat(
   let lastText = ''
 
   pty.onData((data: string) => {
+    console.log('[claude-manager] RAW chunk len:', data.length, 'first 300:', JSON.stringify(data.slice(0, 300)))
     buffer += cleanPtyOutput(data)
     const { objs, rest } = parseJsonlLines(buffer)
+    console.log('[claude-manager] parsed objs:', objs.length, 'rest len:', rest.length)
     buffer = rest
 
     for (const obj of objs) {
+      console.log('[claude-manager] obj type:', obj.type, obj.subtype || '')
       if (obj.type === 'system') continue
 
       if (obj.type === 'error' || obj.is_error) {
