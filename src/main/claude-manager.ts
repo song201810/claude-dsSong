@@ -115,6 +115,7 @@ export function startChat(
     '-p', params.message,
     '--model', params.model,
     '--output-format', 'stream-json',
+    '--verbose',
   ]
 
   let pty: IPty
