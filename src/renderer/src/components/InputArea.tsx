@@ -35,13 +35,13 @@ export default function InputArea() {
   }
 
   return (
-    <div className="border-t border-[#3a3430] px-4 py-3 bg-[#1c1917]">
+    <div className="border-t border-[var(--border)] px-4 py-3 bg-[var(--bg-root)]">
       <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}
-          className="flex-1 bg-[#332e2b] border border-[#3a3430] rounded-2xl px-4 py-2.5 text-sm
-                     text-[#faf7f2] placeholder-[#6b6560]
-                     resize-none focus:outline-none focus:border-[#f0836a] focus:ring-1 focus:ring-[#f0836a]/20
+          className="flex-1 bg-[var(--bg-input)] border border-[var(--border)] rounded-2xl px-4 py-2.5 text-sm
+                     text-[var(--fg-primary)] placeholder-[var(--fg-dim)]
+                     resize-none focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/20
                      transition-all max-h-[200px]"
           placeholder={state.isStreaming ? 'Claude 正在生成...' : '输入消息...'}
           value={input}
@@ -51,9 +51,9 @@ export default function InputArea() {
           disabled={state.isStreaming}
         />
         <button
-          className="px-5 py-2.5 rounded-2xl bg-[#f0836a] hover:bg-[#e0684e] text-white text-sm
+          className="px-5 py-2.5 rounded-2xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm
                      transition-all font-medium disabled:opacity-40 disabled:cursor-not-allowed
-                     shadow-lg shadow-[#f0836a]/20"
+                     shadow-lg shadow-[var(--accent)]/20"
           onClick={handleSend}
           disabled={!input.trim() || state.isStreaming}
         >
@@ -62,10 +62,10 @@ export default function InputArea() {
       </div>
       <div className="flex items-center justify-between mt-2 px-1">
         <ModelSelect />
-        <div className="flex items-center gap-3 text-[10px] text-[#6b6560]">
-          <span><kbd className="px-1 py-0.5 bg-[#332e2b] rounded font-mono text-[10px] text-[#a8a29e]">Enter</kbd> 发送</span>
-          <span className="w-px h-3 bg-[#3a3430]" />
-          <span><kbd className="px-1 py-0.5 bg-[#332e2b] rounded font-mono text-[10px] text-[#a8a29e]">Shift+Enter</kbd> 换行</span>
+        <div className="flex items-center gap-3 text-[10px] text-[var(--fg-dim)]">
+          <span><kbd className="px-1 py-0.5 bg-[var(--bg-input)] rounded font-mono text-[10px] text-[var(--fg-muted)]">Enter</kbd> 发送</span>
+          <span className="w-px h-3 bg-[var(--border)]" />
+          <span><kbd className="px-1 py-0.5 bg-[var(--bg-input)] rounded font-mono text-[10px] text-[var(--fg-muted)]">Shift+Enter</kbd> 换行</span>
         </div>
       </div>
     </div>

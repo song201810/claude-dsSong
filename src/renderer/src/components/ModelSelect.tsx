@@ -7,11 +7,11 @@ export default function ModelSelect() {
 
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-xs text-[#6b6560]">模型:</span>
+      <span className="text-xs text-[var(--fg-dim)]">模型:</span>
       <select
-        className="bg-[#332e2b] border border-[#3a3430] rounded-lg px-2 py-1 text-xs
-                   text-[#a8a29e]
-                   focus:outline-none focus:border-[#f0836a] cursor-pointer transition-all"
+        className="bg-[var(--bg-input)] border border-[var(--border)] rounded-lg px-2 py-1 text-xs
+                   text-[var(--fg-muted)]
+                   focus:outline-none focus:border-[var(--accent)] cursor-pointer transition-all"
         value={state.currentModel}
         onChange={(e) => dispatch({ type: 'SET_CURRENT_MODEL', payload: e.target.value })}
       >
