@@ -65,8 +65,8 @@ function spawnClaude(args: string[], cwd: string): IPty {
     })
     return spawn(shell, ['/c', 'claude', ...escaped], {
       name: 'xterm-256color',
-      cols: 500,
-      rows: 60,
+      cols: 999,
+      rows: 40,
       cwd,
       env: { ...process.env, TERM: 'xterm-256color' },
     })
@@ -102,10 +102,13 @@ export function startChat(
     return
   }
 
+  // Use --max-json-line 0 to disable line truncation
   const args = [
     '-p', params.message,
     '--model', params.model,
     '--output-format', 'stream-json',
+    '--no-formatting',           // skip ANSI entirely
+    '--max-json-line', '0',      // no line wrapping (0 = unlimited)
     '--verbose',
   ]
 
@@ -153,7 +156,14 @@ export function startChat(
   }
 
   pty.onData((raw: string) => {
-    buffer += clean(raw)
+    // Filter ANSI + control characters
+    const cleaned = raw
+      .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+      .replace(/\x1b\][^\x07]*\x07/g, '')
+      .replace(/\x1b\[\?[0-9;]*[hl]/g, '')
+      .replace(/\r/g, '')
+      .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '')  // strip remaining control chars
+    buffer += cleaned
     const lines = buffer.split('\n')
     buffer = lines.pop() || ''
 
@@ -210,9 +220,9 @@ export function startChat(
           return
         }
       } catch (e) {
-        // DEBUG: print lines that fail to parse
-        if (line.trim() && line.trim().startsWith('{')) {
-          console.log('[claude-manager] PARSE FAIL, line head:', line.slice(0, 80))
+        // Print raw line that failed to parse for debugging
+        if (line.trim()) {
+          console.log('[claude-manager] PARSE FAIL, raw line head:', JSON.stringify(line.slice(0, 120)))
         }
       }
     }
