@@ -8,6 +8,8 @@ function createWindow(): void {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
+      contextIsolation: true,
+      nodeIntegration: false,
     },
   })
   mainWindow.loadURL('data:text/html,<h1>Claude Code Desktop</h1>')
