@@ -122,14 +122,10 @@ export function startChat(
     return
   }
 
-  // Build CLI args.
-  // First message:  claude -p "prompt" (single-shot)
-  // Continuation:   claude -p "prompt" --resume (continue last session)
-  const args = ['-p', params.message, '--model', params.model,
-                 '--output-format', 'stream-json', '--verbose']
-  if (params.resume) {
-    args.push('--resume')
-  }
+  // --resume requires --continue, not -p
+  const args = params.resume
+    ? ['--continue', params.message, '--model', params.model, '--output-format', 'stream-json', '--verbose']
+    : ['-p', params.message, '--model', params.model, '--output-format', 'stream-json', '--verbose']
 
   const child = spawnClaudeProc(args, params.workDir || process.cwd())
   child.on('error', (err) => {
