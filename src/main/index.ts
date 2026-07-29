@@ -9,8 +9,9 @@ function createWindow(): void {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    backgroundColor: '#1e1f22',
-    titleBarStyle: 'hiddenInset',
+    backgroundColor: '#1c1917',
+    titleBarStyle: 'default',
+    autoHideMenuBar: true,  // hide menu bar (File/Edit/View) until Alt is pressed
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
