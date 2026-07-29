@@ -63,7 +63,15 @@ function spawnClaude(args: string[], cwd: string): IPty {
   })
 }
 
-/** Extract complete JSON objects from a mixed text stream by tracking `{}` depth */
+function cleanControlChars(data: string): string {
+  return data
+    .replace(/\x1b\[[\?>]?[0-9;]*[a-zA-Z]/g, '')
+    .replace(/\x1b\][^\x07\x1b]*\x07?/g, '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\x00-\x09\x0b\x0c\x0e-\x1f]/g, '')
+    .replace(/\x1b/g, '')
+}
+
 function extractCompleteObjects(buf: string): { objs: Array<Record<string, any>>; rest: string } {
   const objs: Array<Record<string, any>> = []
   let depth = 0
@@ -85,7 +93,6 @@ export function startChat(
   console.log('[claude-manager] startChat called, session:', params.sessionId, 'model:', params.model)
   if (activeProcesses.has(params.sessionId)) return
 
-  // Use the pre-generated assistantMessageId from renderer if provided
   const messageId = params.assistantMessageId || `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
   if (!findClaudePath()) {
@@ -117,25 +124,19 @@ export function startChat(
 
   let buffer = ''
   let lastText = ''
+  let chunkCount = 0
 
   pty.onData((data: string) => {
-    // Log to main process console AND send to renderer console
-    console.log('[claude-manager] onData called, len:', data.length)
-    // Use a single-pass regex to clean all control sequences in one go.
-    // Order: CSI/DEC → OSC → CR→LF → remaining control chars → stray ESC.
-    const cleaned = data
-      .replace(/\x1b\[[\?>]?[0-9;]*[a-zA-Z]/g, '')
-      .replace(/\x1b\][^\x07\x1b]*\x07?/g, '')
-      .replace(/\r\n?/g, '\n')
-      .replace(/[\x00-\x09\x0b\x0c\x0e-\x1f]/g, '')
-      .replace(/\x1b/g, '')
-    console.log('[claude-manager] cleaned first 200:', JSON.stringify(cleaned.slice(0, 200)))
-    buffer += cleaned
+    chunkCount++
+    console.log(`[claude-manager] CHUNK #${chunkCount}, raw_len: ${data.length}, buf_before: ${buffer.length}`)
+    buffer += cleanControlChars(data)
     const { objs, rest } = extractCompleteObjects(buffer)
+    console.log(`[claude-manager] CHUNK #${chunkCount}, objs: ${objs.length}, rest: ${rest.length}`)
     buffer = rest
 
     for (const obj of objs) {
-      console.log('[claude-manager] obj type:', obj.type)
+      console.log('[claude-manager]  obj type:', obj.type)
+
       if (obj.type === 'system') continue
 
       if (obj.type === 'error' || obj.is_error) {
@@ -146,17 +147,17 @@ export function startChat(
         return
       }
 
-      // Progressive assistant message — diff against previous
       if (obj.type === 'assistant' && obj.message?.content) {
         let newText = ''
         for (const block of obj.message.content) {
           if (block.type === 'text' && block.text) newText += block.text
         }
+        console.log(`[claude-manager]  assistant text_len: ${newText.length}, lastText: ${lastText.length}`)
         if (newText.length > lastText.length) {
           const diff = newText.slice(lastText.length)
           lastText = newText
           proc.accumulatedText = newText
-          console.log('[claude-manager] SENDING token diff len:', diff.length, 'total:', newText.length)
+          console.log(`[claude-manager]  SENDING token, diff_len: ${diff.length}`)
           sender.webContents.send(IPC_CHANNELS.CHAT_TOKEN, {
             sessionId: params.sessionId, messageId, token: diff,
           })
@@ -164,17 +165,15 @@ export function startChat(
       }
 
       if (obj.type === 'result') {
-        console.log('[claude-manager] DONE, fullContent len:', ((obj as any).result || proc.accumulatedText).length)
+        const finalText = (obj as any).result || proc.accumulatedText
+        console.log(`[claude-manager]  DONE, finalText_len: ${finalText.length}`)
         sender.webContents.send(IPC_CHANNELS.CHAT_DONE, {
           sessionId: params.sessionId, messageId,
-          fullContent: (obj as any).result || proc.accumulatedText,
+          fullContent: finalText,
         })
         activeProcesses.delete(params.sessionId)
         return
       }
-
-      // Catch unexpected object types for debugging
-      console.warn('[claude-manager] unexpected obj type:', obj.type, obj.subtype)
     }
   })
 
