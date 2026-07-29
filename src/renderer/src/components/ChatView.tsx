@@ -40,18 +40,27 @@ export default function ChatView() {
   if (state.messages.length === 0 && !state.isStreaming) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-        <div className="text-6xl mb-4">🤖</div>
-        <h2 className="text-xl font-semibold mb-2">Claude Code Desktop</h2>
+        <div className="relative mb-6">
+          <div className="text-6xl">🤖</div>
+          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-400 animate-pulse" />
+        </div>
+        <h2 className="text-xl font-semibold mb-2">开始对话</h2>
         <p className="text-gray-400 text-sm max-w-md">
-          在下方输入消息开始对话。选择左侧会话或新建一个会话。
+          在下方输入你的问题，Claude 将为你提供帮助。
         </p>
-        <div className="mt-6 flex gap-2 text-xs text-gray-600">
-          <kbd className="px-2 py-1 bg-[#1a1b1e] rounded">Enter</kbd>
-          <span className="self-center">发送</span>
-          <kbd className="px-2 py-1 bg-[#1a1b1e] rounded">Shift+Enter</kbd>
-          <span className="self-center">换行</span>
-          <kbd className="px-2 py-1 bg-[#1a1b1e] rounded">Esc</kbd>
-          <span className="self-center">取消</span>
+        <div className="mt-8 grid grid-cols-3 gap-4 max-w-lg w-full">
+          <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[#1a1b1e]/60">
+            <kbd className="px-2.5 py-1 text-xs bg-[#313338] rounded font-mono">Enter</kbd>
+            <span className="text-xs text-gray-500">发送消息</span>
+          </div>
+          <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[#1a1b1e]/60">
+            <kbd className="px-2.5 py-1 text-xs bg-[#313338] rounded font-mono">Shift + Enter</kbd>
+            <span className="text-xs text-gray-500">换行</span>
+          </div>
+          <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[#1a1b1e]/60">
+            <kbd className="px-2.5 py-1 text-xs bg-[#313338] rounded font-mono">Esc</kbd>
+            <span className="text-xs text-gray-500">取消生成</span>
+          </div>
         </div>
       </div>
     )
