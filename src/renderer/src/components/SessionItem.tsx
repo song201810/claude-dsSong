@@ -41,7 +41,7 @@ export default function SessionItem({ session, isActive, onSelect, onDelete }: P
         </span>
         <button
           className="opacity-0 group-hover:opacity-100 text-[var(--fg-dim)] hover:text-[var(--accent)]
-                     text-xs px-1 py-0.5 rounded transition-all"
+                     text-xs px-1 py-0.5 rounded transition-all min-w-[44px] min-h-[44px]"
           onClick={handleDelete}
           title="删除会话"
         >

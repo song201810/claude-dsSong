@@ -48,7 +48,7 @@ export default function ChatView() {
         <p className="text-[var(--fg-muted)] text-sm max-w-md">
           在下方输入你的问题，Claude 将为你提供帮助。
         </p>
-        <div className="mt-8 grid grid-cols-3 gap-4 max-w-lg w-full">
+        <div className="mt-8 grid grid-cols-2 gap-4 max-w-sm w-full">
           <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[var(--bg-side)] border border-[var(--border)]">
             <kbd className="px-2.5 py-1 text-xs bg-[var(--bg-input)] rounded-md font-mono text-[var(--fg-primary)]">Enter</kbd>
             <span className="text-xs text-[var(--fg-dim)]">发送消息</span>
@@ -56,10 +56,6 @@ export default function ChatView() {
           <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[var(--bg-side)] border border-[var(--border)]">
             <kbd className="px-2.5 py-1 text-xs bg-[var(--bg-input)] rounded-md font-mono text-[var(--fg-primary)]">Shift + Enter</kbd>
             <span className="text-xs text-[var(--fg-dim)]">换行</span>
-          </div>
-          <div className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-[var(--bg-side)] border border-[var(--border)]">
-            <kbd className="px-2.5 py-1 text-xs bg-[var(--bg-input)] rounded-md font-mono text-[var(--fg-primary)]">Esc</kbd>
-            <span className="text-xs text-[var(--fg-dim)]">取消生成</span>
           </div>
         </div>
       </div>

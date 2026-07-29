@@ -26,7 +26,7 @@ export default function MessageBubble({ message, isStreaming }: Props) {
   const [thinkingExpanded, setThinkingExpanded] = useState(false)
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 px-4`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-2 px-3`}>
       <div
         className={`max-w-[85%] rounded-2xl px-4 py-3 ${
           isUser

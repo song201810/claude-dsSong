@@ -52,7 +52,7 @@ export default function InputArea() {
         />
         <button
           className="px-5 py-2.5 rounded-2xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm
-                     transition-all font-medium disabled:opacity-40 disabled:cursor-not-allowed
+                     transition-all font-medium disabled:opacity-60 disabled:cursor-not-allowed
                      shadow-lg shadow-[var(--accent)]/20"
           onClick={handleSend}
           disabled={!input.trim() || state.isStreaming}

@@ -14,7 +14,7 @@ export default function Sidebar() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
           <h1 className="text-sm font-semibold tracking-wide text-[var(--fg-primary)]">Claude Code</h1>
           <button
-            className="w-7 h-7 flex items-center justify-center rounded-md
+            className="w-11 h-11 flex items-center justify-center rounded-md
                        hover:bg-[var(--bg-hover)] transition-colors text-lg text-[var(--fg-muted)] hover:text-[var(--fg-primary)]"
             onClick={() => setShowModal(true)}
             title="新建会话"
@@ -26,24 +26,33 @@ export default function Sidebar() {
         <div className="mt-auto border-t border-[var(--border)] px-4 py-3">
           <span className="text-xs text-[var(--fg-dim)]">主题</span>
           <div className="flex gap-2 mt-2">
-            <button
-              className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
+            <div className="flex flex-col items-center gap-1">
+              <button
+                className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
                 bg-[#231f1d] ${state.theme === 'warm' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}`}
-              onClick={() => setTheme('warm')}
-              title="暖色暗色"
-            />
-            <button
-              className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
+                onClick={() => setTheme('warm')}
+                title="暖色暗色"
+              />
+              <span className="text-[10px] text-[var(--fg-dim)]">暖色</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <button
+                className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
                 bg-[#161822] ${state.theme === 'cool' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}`}
-              onClick={() => setTheme('cool')}
-              title="冷色暗色"
-            />
-            <button
-              className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
+                onClick={() => setTheme('cool')}
+                title="冷色暗色"
+              />
+              <span className="text-[10px] text-[var(--fg-dim)]">冷色</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <button
+                className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
                 bg-[#ffffff] ${state.theme === 'light' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}`}
-              onClick={() => setTheme('light')}
-              title="明亮"
-            />
+                onClick={() => setTheme('light')}
+                title="明亮"
+              />
+              <span className="text-[10px] text-[var(--fg-dim)]">明亮</span>
+            </div>
           </div>
         </div>
       </div>
