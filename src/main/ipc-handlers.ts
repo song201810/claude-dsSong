@@ -1,5 +1,5 @@
 // src/main/ipc-handlers.ts
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, dialog } from 'electron'
 import { IPC_CHANNELS } from '../shared/types'
 import { listSessions, createSession, getSession, deleteSession } from './session-store'
 import { getSettings, updateSettings, getModels } from './config-manager'
@@ -56,5 +56,16 @@ export function registerIpcHandlers(): void {
       electronVersion: process.versions.electron,
       nodeVersion: process.versions.node,
     }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.APP_SELECT_DIRECTORY, async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory'],
+      title: '选择工作目录',
+    })
+    if (result.canceled || result.filePaths.length === 0) {
+      return null
+    }
+    return result.filePaths[0]
   })
 }

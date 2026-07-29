@@ -65,6 +65,9 @@ const api = {
   // === Application ===
   getAppInfo: (): Promise<{ version: string; platform: string }> =>
     ipcRenderer.invoke(IPC_CHANNELS.APP_GET_INFO),
+
+  selectDirectory: (): Promise<string | null> =>
+    ipcRenderer.invoke(IPC_CHANNELS.APP_SELECT_DIRECTORY),
 }
 
 contextBridge.exposeInMainWorld('api', api)

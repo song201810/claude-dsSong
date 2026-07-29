@@ -15,15 +15,22 @@ export default function NewSessionModal({ isOpen, onClose, onCreate }: Props) {
 
   const handleCreate = () => {
     if (!name.trim()) return
-    onCreate(name.trim(), workDir.trim() || '.')
+    onCreate(name.trim(), workDir || '.')
     setName('')
     setWorkDir('')
     onClose()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleCreate()
+    if (e.key === 'Enter' && name.trim()) handleCreate()
     if (e.key === 'Escape') onClose()
+  }
+
+  const handleSelectDir = async () => {
+    const dir = await window.api.selectDirectory()
+    if (dir) {
+      setWorkDir(dir)
+    }
   }
 
   return (
@@ -45,15 +52,25 @@ export default function NewSessionModal({ isOpen, onClose, onCreate }: Props) {
           autoFocus
         />
 
-        <label className="block text-sm text-gray-400 mb-1">工作目录（可选）</label>
-        <input
-          type="text"
-          className="w-full bg-[#313338] border border-gray-600 rounded px-3 py-2 text-sm
-                     focus:outline-none focus:border-[#6c8ce0] mb-6"
-          placeholder="留空使用当前目录"
-          value={workDir}
-          onChange={(e) => setWorkDir(e.target.value)}
-        />
+        <label className="block text-sm text-gray-400 mb-1">工作目录</label>
+        <div className="flex gap-2 mb-6">
+          <input
+            type="text"
+            className="flex-1 bg-[#313338] border border-gray-600 rounded px-3 py-2 text-sm
+                       focus:outline-none focus:border-[#6c8ce0] text-gray-300"
+            placeholder="点击右侧按钮选择..."
+            value={workDir}
+            onChange={(e) => setWorkDir(e.target.value)}
+            readOnly
+          />
+          <button
+            className="px-3 py-2 text-sm rounded bg-gray-600 hover:bg-gray-500 transition-colors
+                       whitespace-nowrap"
+            onClick={handleSelectDir}
+          >
+            浏览...
+          </button>
+        </div>
 
         <div className="flex justify-end gap-3">
           <button

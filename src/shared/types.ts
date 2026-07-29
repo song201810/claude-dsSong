@@ -23,6 +23,7 @@ export const IPC_CHANNELS = {
 
   // 应用
   APP_GET_INFO: 'app:get-info',
+  APP_SELECT_DIRECTORY: 'app:select-directory',
 } as const
 
 // ============ 数据类型 ============
