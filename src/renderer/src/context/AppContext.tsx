@@ -192,6 +192,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // --- IPC listeners (registered once, uses stateRef to avoid stale closures) ---
   useEffect(() => {
     const c1 = window.api.onChatToken((data) => {
+      console.log('[AppContext] TOKEN', data.messageId, 'len', data.token.length)
       dispatch({ type: 'APPEND_TOKEN', payload: { token: data.token, thinking: data.thinking } })
     })
     const c2 = window.api.onChatError((data) => {
