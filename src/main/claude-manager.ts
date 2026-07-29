@@ -163,6 +163,9 @@ export function startChat(
         activeProcesses.delete(params.sessionId)
         return
       }
+
+      // Catch unexpected object types for debugging
+      console.warn('[claude-manager] unexpected obj type:', obj.type, obj.subtype)
     }
   })
 
