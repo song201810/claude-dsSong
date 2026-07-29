@@ -70,7 +70,8 @@ export default function NewSessionModal({ isOpen, onClose, onCreate }: Props) {
           <button
             className="px-3 py-2.5 text-sm rounded-lg bg-[var(--bg-input)] border border-[var(--border)]
                        text-[var(--fg-muted)] hover:text-[var(--fg-primary)] hover:border-[#57534e]
-                       transition-all whitespace-nowrap"
+                       transition-all whitespace-nowrap
+                       focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-1 focus:ring-offset-[var(--bg-side)]"
             onClick={handleSelectDir}
           >
             浏览...
@@ -80,7 +81,8 @@ export default function NewSessionModal({ isOpen, onClose, onCreate }: Props) {
         <div className="flex justify-end gap-3">
           <button
             className="px-4 py-2 text-sm rounded-lg bg-[var(--bg-card)] hover:bg-[var(--bg-input)]
-                       text-[var(--fg-muted)] transition-all"
+                       text-[var(--fg-muted)] transition-all
+                       focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-1 focus:ring-offset-[var(--bg-side)]"
             onClick={onClose}
           >
             取消
@@ -88,7 +90,8 @@ export default function NewSessionModal({ isOpen, onClose, onCreate }: Props) {
           <button
             className="px-4 py-2 text-sm rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)]
                        text-white font-medium transition-all
-                       disabled:opacity-40 disabled:cursor-not-allowed"
+                       disabled:opacity-40 disabled:cursor-not-allowed
+                       focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-1 focus:ring-offset-[var(--bg-side)]"
             onClick={handleCreate}
             disabled={!name.trim()}
           >

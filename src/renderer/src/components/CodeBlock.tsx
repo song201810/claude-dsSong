@@ -21,7 +21,8 @@ export default function CodeBlock({ language, code }: Props) {
         <span className="text-xs text-[var(--fg-muted)] font-mono">{language || 'code'}</span>
         <button
           className="text-xs px-2 py-0.5 rounded-md hover:bg-[var(--bg-active)] transition-colors
-                     text-[var(--fg-muted)] hover:text-[var(--fg-primary)]"
+                     text-[var(--fg-muted)] hover:text-[var(--fg-primary)]
+                     focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           onClick={handleCopy}
         >
           {copied ? '已复制 ✓' : '复制'}

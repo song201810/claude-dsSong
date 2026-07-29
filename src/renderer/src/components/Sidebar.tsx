@@ -1,5 +1,6 @@
 // src/renderer/src/components/Sidebar.tsx
 import React, { useState } from 'react'
+import { Plus } from 'lucide-react'
 import SessionList from './SessionList'
 import NewSessionModal from './NewSessionModal'
 import { useAppContext } from '../context/AppContext'
@@ -15,11 +16,12 @@ export default function Sidebar() {
           <h1 className="text-sm font-semibold tracking-wide text-[var(--fg-primary)]">Claude Code</h1>
           <button
             className="w-11 h-11 flex items-center justify-center rounded-md
-                       hover:bg-[var(--bg-hover)] transition-colors text-lg text-[var(--fg-muted)] hover:text-[var(--fg-primary)]"
+                       hover:bg-[var(--bg-hover)] transition-colors text-lg text-[var(--fg-muted)] hover:text-[var(--fg-primary)]
+                       focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-1 focus:ring-offset-[var(--bg-side)]"
             onClick={() => setShowModal(true)}
             title="新建会话"
           >
-            +
+            <Plus size={20} />
           </button>
         </div>
         <SessionList />
@@ -29,7 +31,8 @@ export default function Sidebar() {
             <div className="flex flex-col items-center gap-1">
               <button
                 className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
-                bg-[#231f1d] ${state.theme === 'warm' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}`}
+                bg-[#231f1d] ${state.theme === 'warm' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}
+                focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-1 focus:ring-offset-[var(--bg-side)]`}
                 onClick={() => setTheme('warm')}
                 title="暖色暗色"
               />
@@ -38,7 +41,8 @@ export default function Sidebar() {
             <div className="flex flex-col items-center gap-1">
               <button
                 className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
-                bg-[#161822] ${state.theme === 'cool' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}`}
+                bg-[#161822] ${state.theme === 'cool' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}
+                focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-1 focus:ring-offset-[var(--bg-side)]`}
                 onClick={() => setTheme('cool')}
                 title="冷色暗色"
               />
@@ -47,7 +51,8 @@ export default function Sidebar() {
             <div className="flex flex-col items-center gap-1">
               <button
                 className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer
-                bg-[#ffffff] ${state.theme === 'light' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}`}
+                bg-[#ffffff] ${state.theme === 'light' ? 'border-[var(--accent)] scale-110' : 'border-transparent'}
+                focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-1 focus:ring-offset-[var(--bg-side)]`}
                 onClick={() => setTheme('light')}
                 title="明亮"
               />

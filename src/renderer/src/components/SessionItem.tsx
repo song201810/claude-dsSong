@@ -32,8 +32,12 @@ export default function SessionItem({ session, isActive, onSelect, onDelete }: P
         group flex flex-col px-3 py-2.5 cursor-pointer border-b border-[var(--border-muted)]
         transition-colors duration-150
         ${isActive ? 'bg-[var(--bg-active)]' : 'hover:bg-[var(--bg-hover)]'}
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-inset
       `}
       onClick={() => onSelect(session.id)}
+      tabIndex={0}
+      role="button"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(session.id) }}
     >
       <div className="flex items-center justify-between">
         <span className={`text-sm font-medium truncate ${isActive ? 'text-[var(--fg-primary)]' : 'text-[var(--fg-primary)]'}`}>
@@ -41,7 +45,8 @@ export default function SessionItem({ session, isActive, onSelect, onDelete }: P
         </span>
         <button
           className="opacity-0 group-hover:opacity-100 text-[var(--fg-dim)] hover:text-[var(--accent)]
-                     text-xs px-1 py-0.5 rounded transition-all min-w-[44px] min-h-[44px]"
+                     text-xs px-1 py-0.5 rounded transition-all min-w-[44px] min-h-[44px]
+                     focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           onClick={handleDelete}
           title="删除会话"
         >

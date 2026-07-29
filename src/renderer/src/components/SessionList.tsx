@@ -1,5 +1,6 @@
 // src/renderer/src/components/SessionList.tsx
 import React from 'react'
+import { MessageSquare } from 'lucide-react'
 import SessionItem from './SessionItem'
 import { useAppContext } from '../context/AppContext'
 
@@ -9,7 +10,7 @@ export default function SessionList() {
   if (state.sessions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <div className="text-4xl mb-3">💬</div>
+        <MessageSquare size={40} className="mb-3 text-[var(--fg-dim)]" />
         <p className="text-[var(--fg-muted)] text-sm">暂无会话</p>
         <p className="text-[var(--fg-dim)] text-xs mt-1">点击上方 + 创建第一个会话</p>
       </div>

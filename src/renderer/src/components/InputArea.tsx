@@ -53,7 +53,8 @@ export default function InputArea() {
         <button
           className="px-5 py-2.5 rounded-2xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm
                      transition-all font-medium disabled:opacity-60 disabled:cursor-not-allowed
-                     shadow-lg shadow-[var(--accent)]/20"
+                     shadow-lg shadow-[var(--accent)]/20
+                     focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2 focus:ring-offset-[var(--bg-root)]"
           onClick={handleSend}
           disabled={!input.trim() || state.isStreaming}
         >

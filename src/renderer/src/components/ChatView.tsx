@@ -1,5 +1,6 @@
 // src/renderer/src/components/ChatView.tsx
 import React, { useRef, useEffect, useState } from 'react'
+import { Bot, AlertTriangle } from 'lucide-react'
 import MessageBubble from './MessageBubble'
 import { useAppContext } from '../context/AppContext'
 
@@ -16,10 +17,11 @@ function ErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => voi
                   text-[var(--error-text)] text-sm flex items-start gap-3 transition-all duration-300
                   ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
     >
-      <span className="text-lg flex-shrink-0 mt-0.5">⚠️</span>
+      <AlertTriangle size={20} className="flex-shrink-0 mt-0.5 text-[var(--error-text)]" />
       <span className="flex-1 leading-relaxed">{error}</span>
       <button
-        className="flex-shrink-0 text-[var(--error-text)] hover:text-[var(--fg-primary)] transition-colors text-sm px-1"
+        className="flex-shrink-0 text-[var(--error-text)] hover:text-[var(--fg-primary)] transition-colors text-sm px-1
+                   focus:outline-none focus:ring-2 focus:ring-[var(--accent)] rounded"
         onClick={() => { setVisible(false); setTimeout(onDismiss, 300) }}
         title="关闭"
       >
@@ -32,16 +34,49 @@ function ErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => voi
 export default function ChatView() {
   const { state, dispatch } = useAppContext()
   const bottomRef = useRef<HTMLDivElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+  const scrollPositions = useRef<Map<string, number>>(new Map())
+  const prevMessageCount = useRef(state.messages.length)
+  const prevSessionId = useRef(state.currentSessionId)
 
+  // Save scroll position of the PREVIOUS session before switching
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [state.messages, state.isStreaming])
+    const container = chatContainerRef.current
+    const currentId = state.currentSessionId
+
+    if (prevSessionId.current && prevSessionId.current !== currentId && container) {
+      scrollPositions.current.set(prevSessionId.current, container.scrollTop)
+    }
+    prevSessionId.current = currentId
+  }, [state.currentSessionId])
+
+  // Handle auto-scroll on new messages, restore on session switch
+  useEffect(() => {
+    const container = chatContainerRef.current
+    if (!container) return
+
+    const isNewMessage = state.messages.length > prevMessageCount.current
+    const isStreamingUpdate = state.isStreaming
+
+    if (isNewMessage || isStreamingUpdate) {
+      // Auto-scroll: new content arrived
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } else if (state.currentSessionId) {
+      // Session switch: restore saved position
+      const saved = scrollPositions.current.get(state.currentSessionId)
+      if (saved !== undefined) {
+        container.scrollTop = saved
+      }
+    }
+
+    prevMessageCount.current = state.messages.length
+  }, [state.messages, state.isStreaming, state.currentSessionId])
 
   if (state.messages.length === 0 && !state.isStreaming) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
         <div className="relative mb-6">
-          <div className="text-6xl">🤖</div>
+          <Bot size={64} className="text-[var(--accent)]" />
           <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--accent)] animate-pulse shadow-lg shadow-[var(--accent)]/30" />
         </div>
         <h2 className="text-xl font-semibold mb-2 text-[var(--fg-primary)]">开始对话</h2>
@@ -63,7 +98,7 @@ export default function ChatView() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto py-4 animate-fade-in" key={state.currentSessionId}>
+    <div className="flex-1 overflow-y-auto py-4 animate-fade-in" key={state.currentSessionId} ref={chatContainerRef}>
       {state.messages.map((msg) => (
         <MessageBubble key={msg.id} message={msg} isStreaming={state.isStreaming} />
       ))}

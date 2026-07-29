@@ -11,7 +11,7 @@ export default function ModelSelect() {
       <select
         className="bg-[var(--bg-input)] border border-[var(--border)] rounded-lg px-2 py-1 text-xs
                    text-[var(--fg-muted)]
-                   focus:outline-none focus:border-[var(--accent)] cursor-pointer transition-all"
+                   focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 cursor-pointer transition-all"
         value={state.currentModel}
         onChange={(e) => dispatch({ type: 'SET_CURRENT_MODEL', payload: e.target.value })}
       >
