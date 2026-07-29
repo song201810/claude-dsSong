@@ -82,6 +82,7 @@ export function startChat(
   params: SendMessageParams,
   sender: BrowserWindow
 ): void {
+  console.log('[claude-manager] startChat called, session:', params.sessionId, 'model:', params.model)
   if (activeProcesses.has(params.sessionId)) return
 
   // Use the pre-generated assistantMessageId from renderer if provided
@@ -97,6 +98,7 @@ export function startChat(
 
   const args = ['-p', params.message, '--model', params.model,
                  '--output-format', 'stream-json', '--verbose']
+  console.log('[claude-manager] spawning claude with args:', args.join(' '))
 
   let pty: IPty
   try { pty = spawnClaude(args, process.cwd()) } catch (err) {
@@ -106,6 +108,7 @@ export function startChat(
     })
     return
   }
+  console.log('[claude-manager] pty spawned, pid:', (pty as any).pid)
 
   const proc: ActiveProcess = {
     pty, messageId, sessionId: params.sessionId, accumulatedText: '',
