@@ -128,13 +128,12 @@ export function startChat(
   let buffer = ''
   let lastText = ''
 
-  pty.onData((raw: string) => {
-    const cleaned = sanitize(raw)
-    console.log('[claude-manager] RAW first 200 chars:', JSON.stringify(raw.slice(0, 200)))
-    buffer += cleaned
+  pty.onData((data: string) => {
+    console.log('[claude-manager] RAW first 500:', JSON.stringify(data.slice(0, 500)))
+    buffer += sanitize(data)
     const { objs, rest } = extractObjects(buffer)
     buffer = rest
-    console.log('[claude-manager] raw len', raw.length, 'objs extracted', objs.length, 'buffer remaining', buffer.length)
+    console.log('[claude-manager] objs extracted', objs.length, 'buffer remaining', buffer.length)
 
     for (const obj of objs) {
       console.log('[claude-manager] obj type:', obj.type)
