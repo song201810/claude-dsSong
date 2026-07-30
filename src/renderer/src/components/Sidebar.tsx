@@ -8,6 +8,8 @@ import { useAppContext } from '../context/AppContext'
 export default function Sidebar() {
   const [showModal, setShowModal] = useState(false)
   const [pendingGroupId, setPendingGroupId] = useState<string | undefined>()
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false)
+  const [newGroupName, setNewGroupName] = useState('')
   const { state, createSession, createGroup, setTheme } = useAppContext()
 
   // Listen for create-session-in-group events from SessionList
@@ -27,8 +29,15 @@ export default function Sidebar() {
   }, [createSession, pendingGroupId])
 
   const handleCreateGroup = () => {
-    const name = prompt('输入分组名称')
-    if (name?.trim()) createGroup(name.trim())
+    setIsCreatingGroup(true)
+    setNewGroupName('')
+  }
+
+  const handleSubmitGroup = () => {
+    const name = newGroupName.trim()
+    if (name) createGroup(name)
+    setIsCreatingGroup(false)
+    setNewGroupName('')
   }
 
   return (
@@ -57,6 +66,48 @@ export default function Sidebar() {
             </button>
           </div>
         </div>
+
+        {/* Inline new group form */}
+        {isCreatingGroup && (
+          <div className="flex items-center gap-1.5 px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-root)]">
+            <input
+              type="text"
+              className="flex-1 min-w-0 bg-[var(--bg-input)] border border-[var(--accent)] rounded-md
+                         px-2 py-1 text-[13px] text-[var(--fg-primary)] placeholder-[var(--fg-dim)]
+                         focus:outline-none"
+              placeholder="输入分组名称"
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSubmitGroup()
+                if (e.key === 'Escape') {
+                  setIsCreatingGroup(false)
+                  setNewGroupName('')
+                }
+              }}
+              autoFocus
+            />
+            <button
+              className="px-2 py-1 text-[13px] rounded-md bg-[var(--accent)] hover:bg-[var(--accent-hover)]
+                         text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              onClick={handleSubmitGroup}
+              disabled={!newGroupName.trim()}
+            >
+              确定
+            </button>
+            <button
+              className="px-2 py-1 text-[13px] rounded-md bg-[var(--bg-card)] hover:bg-[var(--bg-input)]
+                         text-[var(--fg-muted)] transition-colors"
+              onClick={() => {
+                setIsCreatingGroup(false)
+                setNewGroupName('')
+              }}
+            >
+              取消
+            </button>
+          </div>
+        )}
+
         <SessionList />
         <div className="mt-auto border-t border-[var(--border)] px-4 py-3">
           <span className="text-xs text-[var(--fg-dim)]">主题</span>
