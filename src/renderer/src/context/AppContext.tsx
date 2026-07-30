@@ -165,6 +165,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const loadGroups = useCallback(async () => {
+    const groups = await window.api.listGroups()
+    dispatch({ type: 'SET_GROUPS', payload: groups })
+  }, [])
+
   const createSession = useCallback(async (name: string, workDir: string, groupId?: string) => {
     const session = await window.api.createSession({
       name, workDir, model: state.currentModel,
@@ -232,11 +237,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setTheme = useCallback(async (theme: 'warm' | 'cool' | 'light') => {
     await window.api.updateSettings({ theme })
     dispatch({ type: 'SET_THEME', payload: theme })
-  }, [])
-
-  const loadGroups = useCallback(async () => {
-    const groups = await window.api.listGroups()
-    dispatch({ type: 'SET_GROUPS', payload: groups })
   }, [])
 
   const createGroup = useCallback(async (name: string) => {
