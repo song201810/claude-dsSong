@@ -151,3 +151,11 @@ html, body, #root {
 .animate-fade-in {
   animation: fadeIn 150ms ease-out;
 }
+
+/* ============ group context menu ============ */
+.group-context-menu-item {
+  cursor: pointer;
+}
+.group-context-menu-item:hover {
+  background: var(--bg-hover);
+}

@@ -1,6 +1,6 @@
 // src/renderer/src/context/AppContext.tsx
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react'
-import type { SessionSummary, Message, ModelInfo } from '../../../shared/types'
+import type { SessionSummary, Message, ModelInfo, SessionGroup } from '../../../shared/types'
 
 // ============ State ============
 interface AppState {
@@ -14,6 +14,7 @@ interface AppState {
   streamingAssistantId: string | null
   error: string | null
   theme: 'warm' | 'cool' | 'light'
+  groups: SessionGroup[]
 }
 
 const initialState: AppState = {
@@ -27,6 +28,7 @@ const initialState: AppState = {
   streamingAssistantId: null,
   error: null,
   theme: 'warm',
+  groups: [],
 }
 
 // ============ Actions ============
@@ -44,6 +46,10 @@ type Action =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_THEME'; payload: 'warm' | 'cool' | 'light' }
   | { type: 'REMOVE_SESSION'; payload: string }
+  | { type: 'SET_GROUPS'; payload: SessionGroup[] }
+  | { type: 'ADD_GROUP'; payload: SessionGroup }
+  | { type: 'REMOVE_GROUP'; payload: string }
+  | { type: 'UPDATE_GROUP'; payload: SessionGroup }
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -100,6 +106,17 @@ function reducer(state: AppState, action: Action): AppState {
         messages:
           state.currentSessionId === action.payload ? [] : state.messages,
       }
+    case 'SET_GROUPS':
+      return { ...state, groups: action.payload }
+    case 'ADD_GROUP':
+      return { ...state, groups: [...state.groups, action.payload] }
+    case 'REMOVE_GROUP':
+      return { ...state, groups: state.groups.filter(g => g.id !== action.payload) }
+    case 'UPDATE_GROUP':
+      return {
+        ...state,
+        groups: state.groups.map(g => g.id === action.payload.id ? action.payload : g),
+      }
     default:
       return state
   }
@@ -111,13 +128,18 @@ interface AppContextType {
   dispatch: React.Dispatch<Action>
   loadSessions: () => Promise<void>
   switchSession: (sessionId: string) => Promise<void>
-  createSession: (name: string, workDir: string) => Promise<void>
+  createSession: (name: string, workDir: string, groupId?: string) => Promise<void>
   removeSession: (sessionId: string) => Promise<void>
   sendMessage: (content: string) => void
   cancelMessage: () => void
   loadModels: () => Promise<void>
   setTheme: (theme: 'warm' | 'cool' | 'light') => Promise<void>
   loadTheme: () => Promise<void>
+  loadGroups: () => Promise<void>
+  createGroup: (name: string) => Promise<void>
+  deleteGroup: (id: string) => Promise<void>
+  renameGroup: (id: string, name: string) => Promise<void>
+  moveSessionToGroup: (sessionId: string, groupId: string | null) => Promise<void>
 }
 
 const AppContext = createContext<AppContextType | null>(null)
@@ -143,14 +165,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const createSession = useCallback(async (name: string, workDir: string) => {
+  const createSession = useCallback(async (name: string, workDir: string, groupId?: string) => {
     const session = await window.api.createSession({
       name, workDir, model: state.currentModel,
     })
+    if (groupId) {
+      await window.api.addSessionToGroup(session.id, groupId).catch(() => {})
+    }
     await loadSessions()
+    await loadGroups()
     dispatch({ type: 'SET_CURRENT_SESSION', payload: session.id })
     dispatch({ type: 'SET_MESSAGES', payload: [] })
-  }, [state.currentModel, loadSessions])
+  }, [state.currentModel, loadSessions, loadGroups])
 
   const removeSession = useCallback(async (sessionId: string) => {
     await window.api.deleteSession(sessionId)
@@ -208,6 +234,39 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'SET_THEME', payload: theme })
   }, [])
 
+  const loadGroups = useCallback(async () => {
+    const groups = await window.api.listGroups()
+    dispatch({ type: 'SET_GROUPS', payload: groups })
+  }, [])
+
+  const createGroup = useCallback(async (name: string) => {
+    const group = await window.api.createGroup(name)
+    dispatch({ type: 'ADD_GROUP', payload: group })
+  }, [])
+
+  const deleteGroup = useCallback(async (id: string) => {
+    await window.api.deleteGroup(id)
+    dispatch({ type: 'REMOVE_GROUP', payload: id })
+    await loadSessions()
+  }, [loadSessions])
+
+  const renameGroup = useCallback(async (id: string, name: string) => {
+    const updated = await window.api.renameGroup(id, name)
+    if (updated) {
+      dispatch({ type: 'UPDATE_GROUP', payload: updated })
+    }
+  }, [])
+
+  const moveSessionToGroup = useCallback(async (sessionId: string, groupId: string | null) => {
+    if (groupId) {
+      await window.api.addSessionToGroup(sessionId, groupId)
+    } else {
+      await window.api.removeSessionFromGroup(sessionId)
+    }
+    await loadSessions()
+    await loadGroups()
+  }, [loadSessions, loadGroups])
+
   // --- IPC listeners (registered once, uses stateRef to avoid stale closures) ---
   useEffect(() => {
     const c1 = window.api.onChatToken((data) => {
@@ -237,7 +296,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     loadSessions()
     loadModels()
     loadTheme()
-  }, [loadSessions, loadModels, loadTheme])
+    loadGroups()
+  }, [loadSessions, loadModels, loadTheme, loadGroups])
 
   return (
     <AppContext.Provider
@@ -246,6 +306,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         loadSessions, switchSession, createSession, removeSession,
         sendMessage, cancelMessage, loadModels,
         setTheme, loadTheme,
+        loadGroups, createGroup, deleteGroup, renameGroup, moveSessionToGroup,
       }}
     >
       {children}

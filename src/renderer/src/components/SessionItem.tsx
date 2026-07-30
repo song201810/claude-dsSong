@@ -7,9 +7,11 @@ interface Props {
   isActive: boolean
   onSelect: (id: string) => void
   onDelete: (id: string) => void
+  onContextMenu?: (e: React.MouseEvent) => void
+  isIndented?: boolean
 }
 
-export default function SessionItem({ session, isActive, onSelect, onDelete }: Props) {
+export default function SessionItem({ session, isActive, onSelect, onDelete, onContextMenu, isIndented }: Props) {
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (confirm(`确定删除会话「${session.name}」？`)) {
@@ -23,9 +25,14 @@ export default function SessionItem({ session, isActive, onSelect, onDelete }: P
         group flex items-center px-3 py-2 cursor-pointer border-b border-[var(--border-muted)]
         transition-colors duration-150
         ${isActive ? 'bg-[var(--bg-active)]' : 'hover:bg-[var(--bg-hover)]'}
+        ${isIndented ? 'pl-7' : ''}
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-inset
       `}
       onClick={() => onSelect(session.id)}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        onContextMenu?.(e)
+      }}
       tabIndex={0}
       role="button"
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(session.id) }}

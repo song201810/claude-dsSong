@@ -5,9 +5,10 @@ interface Props {
   isOpen: boolean
   onClose: () => void
   onCreate: (name: string, workDir: string) => void
+  groupId?: string
 }
 
-export default function NewSessionModal({ isOpen, onClose, onCreate }: Props) {
+export default function NewSessionModal({ isOpen, onClose, onCreate, groupId }: Props) {
   const [name, setName] = useState('')
   const [workDir, setWorkDir] = useState('')
 

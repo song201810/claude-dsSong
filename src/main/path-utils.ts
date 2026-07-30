@@ -41,6 +41,13 @@ export function getSessionMessagesPath(sessionId: string): string {
 }
 
 /**
+ * Get the path to the groups storage file.
+ */
+export function getGroupsPath(): string {
+  return join(getAppDataDir(), 'groups.json')
+}
+
+/**
  * Get the path to the settings JSON file.
  */
 export function getSettingsPath(): string {

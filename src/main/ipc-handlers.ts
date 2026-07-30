@@ -2,6 +2,7 @@
 import { ipcMain, BrowserWindow, dialog } from 'electron'
 import { IPC_CHANNELS } from '../shared/types'
 import { listSessions, createSession, getSession, deleteSession, appendMessage } from './session-store'
+import { listGroups, createGroup, deleteGroup, renameGroup, addSessionToGroup, removeSessionFromGroup } from './group-store'
 import { getSettings, updateSettings, getModels } from './config-manager'
 import { startChat, cancelChat } from './claude-manager'
 
@@ -26,6 +27,31 @@ export function registerIpcHandlers(): void {
   // Internal channel for persisting messages from renderer
   ipcMain.handle('session:append-message', async (_, sessionId: string, message: any) => {
     await appendMessage(sessionId, message)
+  })
+
+  // === Group Management ===
+  ipcMain.handle(IPC_CHANNELS.GROUP_LIST, async () => {
+    return await listGroups()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GROUP_CREATE, async (_, name: string) => {
+    return await createGroup(name)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GROUP_DELETE, async (_, id: string) => {
+    await deleteGroup(id)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GROUP_RENAME, async (_, id: string, name: string) => {
+    return await renameGroup(id, name)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GROUP_ADD_SESSION, async (_, sessionId: string, groupId: string) => {
+    await addSessionToGroup(sessionId, groupId)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GROUP_REMOVE_SESSION, async (_, sessionId: string) => {
+    await removeSessionFromGroup(sessionId)
   })
 
   // === Chat Control ===

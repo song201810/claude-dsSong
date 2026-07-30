@@ -12,6 +12,7 @@ import {
   type ChatTokenEvent,
   type ChatErrorEvent,
   type ChatDoneEvent,
+  type SessionGroup,
 } from '../shared/types'
 
 const api = {
@@ -30,6 +31,25 @@ const api = {
 
   appendMessage: (sessionId: string, message: Message): Promise<void> =>
     ipcRenderer.invoke('session:append-message', sessionId, message),
+
+  // === Groups ===
+  listGroups: (): Promise<SessionGroup[]> =>
+    ipcRenderer.invoke(IPC_CHANNELS.GROUP_LIST),
+
+  createGroup: (name: string): Promise<SessionGroup> =>
+    ipcRenderer.invoke(IPC_CHANNELS.GROUP_CREATE, name),
+
+  deleteGroup: (id: string): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.GROUP_DELETE, id),
+
+  renameGroup: (id: string, name: string): Promise<SessionGroup | null> =>
+    ipcRenderer.invoke(IPC_CHANNELS.GROUP_RENAME, id, name),
+
+  addSessionToGroup: (sessionId: string, groupId: string): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.GROUP_ADD_SESSION, sessionId, groupId),
+
+  removeSessionFromGroup: (sessionId: string): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.GROUP_REMOVE_SESSION, sessionId),
 
   // === Chat ===
   sendMessage: (params: SendMessageParams): void =>

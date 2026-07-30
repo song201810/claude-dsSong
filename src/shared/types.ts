@@ -21,6 +21,14 @@ export const IPC_CHANNELS = {
   CONFIG_GET_SETTINGS: 'config:get-settings',
   CONFIG_UPDATE_SETTINGS: 'config:update-settings',
 
+  // 分组管理
+  GROUP_LIST: 'group:list',
+  GROUP_CREATE: 'group:create',
+  GROUP_DELETE: 'group:delete',
+  GROUP_RENAME: 'group:rename',
+  GROUP_ADD_SESSION: 'group:add-session',
+  GROUP_REMOVE_SESSION: 'group:remove-session',
+
   // 应用
   APP_GET_INFO: 'app:get-info',
   APP_SELECT_DIRECTORY: 'app:select-directory',
@@ -33,6 +41,7 @@ export interface SessionSummary {
   name: string
   workDir: string
   model: string
+  groupId?: string
   createdAt: string
   updatedAt: string
   messageCount: number
@@ -40,6 +49,13 @@ export interface SessionSummary {
 
 export interface Session extends SessionSummary {
   messages: Message[]
+}
+
+export interface SessionGroup {
+  id: string
+  name: string
+  createdAt: string
+  sessionIds: string[]
 }
 
 export interface Message {
