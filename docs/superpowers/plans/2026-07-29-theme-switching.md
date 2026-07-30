@@ -35,7 +35,7 @@
 **文件：**
 - 修改：`src/renderer/src/styles/index.css`
 
-- [ ] **步骤 1：重写 index.css — 定义 CSS 变量 + 主题**
+- [x] **步骤 1：重写 index.css — 定义 CSS 变量 + 主题**
 
 将当前文件替换为：
 
@@ -143,7 +143,7 @@ html, body, #root {
 }
 ```
 
-- [ ] **步骤 2：编译验证**
+- [x] **步骤 2：编译验证**
 
 ```bash
 cd D:/project/claude/desktop && npx electron-vite build
@@ -151,7 +151,7 @@ cd D:/project/claude/desktop && npx electron-vite build
 
 预期：build 成功（CSS 变更，renderer 重新构建）
 
-- [ ] **步骤 3：Commit**
+- [x] **步骤 3：Commit**
 
 ```bash
 git add src/renderer/src/styles/index.css
@@ -206,7 +206,7 @@ git commit -m "feat: define CSS custom properties for warm/cool/light themes"
 | `#1c1917/50` | `bg-[var(--bg-root)]/50` |
 | 错误色 `red-*` | `bg-[var(--error-bg)]` / `border-[var(--error-border)]` / `text-[var(--error-text)]` |
 
-- [ ] **步骤 1：逐组件替换 App.tsx**
+- [x] **步骤 1：逐组件替换 App.tsx**
 
 ```tsx
 // 旧
@@ -215,7 +215,7 @@ git commit -m "feat: define CSS custom properties for warm/cool/light themes"
 <div className="flex h-screen bg-[var(--bg-root)] text-[var(--fg-primary)] overflow-hidden">
 ```
 
-- [ ] **步骤 2：替换 Sidebar.tsx**
+- [x] **步骤 2：替换 Sidebar.tsx**
 
 ```tsx
 // 旧
@@ -227,7 +227,7 @@ git commit -m "feat: define CSS custom properties for warm/cool/light themes"
 // 新: hover:bg-[var(--bg-hover)] text-[var(--fg-muted)] hover:text-[var(--fg-primary)]
 ```
 
-- [ ] **步骤 3：替换 SessionItem.tsx**
+- [x] **步骤 3：替换 SessionItem.tsx**
 
 ```tsx
 // border-b border-[#3a3430]/50  →  border-b border-[var(--border-muted)]
@@ -239,14 +239,14 @@ git commit -m "feat: define CSS custom properties for warm/cool/light themes"
 // hover:text-[#f0836a] → hover:text-[var(--accent)]
 ```
 
-- [ ] **步骤 4：替换 SessionList.tsx**
+- [x] **步骤 4：替换 SessionList.tsx**
 
 ```tsx
 // 旧: text-gray-400 → text-[var(--fg-muted)]
 // 旧: text-gray-600 → text-[var(--fg-dim)]
 ```
 
-- [ ] **步骤 5：替换 NewSessionModal.tsx**
+- [x] **步骤 5：替换 NewSessionModal.tsx**
 
 ```tsx
 // bg-black/60 → bg-[var(--bg-overlay)]
@@ -254,7 +254,7 @@ git commit -m "feat: define CSS custom properties for warm/cool/light themes"
 // 所有其他颜色按映射表替换
 ```
 
-- [ ] **步骤 6：替换 ChatView.tsx**
+- [x] **步骤 6：替换 ChatView.tsx**
 
 ```tsx
 // bg-[#1a1b1e]/60 → bg-[var(--bg-side)]/60
@@ -265,7 +265,7 @@ git commit -m "feat: define CSS custom properties for warm/cool/light themes"
 //             text-red-200 → text-[var(--error-text)]
 ```
 
-- [ ] **步骤 7：替换 MessageBubble.tsx**
+- [x] **步骤 7：替换 MessageBubble.tsx**
 
 ```tsx
 // 用户气泡 bg-[#e0684e] → bg-[var(--accent-hover)]
@@ -273,7 +273,7 @@ git commit -m "feat: define CSS custom properties for warm/cool/light themes"
 // 其他颜色按映射表替换
 ```
 
-- [ ] **步骤 8：替换 CodeBlock.tsx**
+- [x] **步骤 8：替换 CodeBlock.tsx**
 
 ```tsx
 // 代码背景 bg-[#1e1b19] → bg-[var(--bg-code)]
@@ -281,7 +281,7 @@ git commit -m "feat: define CSS custom properties for warm/cool/light themes"
 // border-gray-700 → border-[var(--border)]
 ```
 
-- [ ] **步骤 9：替换 InputArea.tsx**
+- [x] **步骤 9：替换 InputArea.tsx**
 
 ```tsx
 // bg-[#1c1917] → bg-[var(--bg-root)]
@@ -290,14 +290,14 @@ git commit -m "feat: define CSS custom properties for warm/cool/light themes"
 // 所有颜色按映射表替换
 ```
 
-- [ ] **步骤 10：替换 ModelSelect.tsx**
+- [x] **步骤 10：替换 ModelSelect.tsx**
 
 ```tsx
 // bg-[#313338] → bg-[var(--bg-input)]
 // 所有颜色按映射表替换
 ```
 
-- [ ] **步骤 11：编译验证**
+- [x] **步骤 11：编译验证**
 
 ```bash
 cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.web.json && npx electron-vite build
@@ -305,7 +305,7 @@ cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.web.json && npx ele
 
 预期：编译零错误，构建成功。
 
-- [ ] **步骤 12：Commit**
+- [x] **步骤 12：Commit**
 
 ```bash
 git add -A && git commit -m "feat: migrate all components from hardcoded colors to CSS custom properties"
@@ -320,7 +320,7 @@ git add -A && git commit -m "feat: migrate all components from hardcoded colors 
 - 修改：`src/renderer/src/context/AppContext.tsx`
 - 修改：`src/renderer/src/App.tsx`
 
-- [ ] **步骤 1：收窄 Settings.theme 类型（types.ts）**
+- [x] **步骤 1：收窄 Settings.theme 类型（types.ts）**
 
 找到 `Settings` 接口，将 `theme` 类型改为：
 
@@ -334,7 +334,7 @@ export interface Settings {
 
 （去掉 `?` 使其必选，默认值为 `'warm'`）
 
-- [ ] **步骤 2：更新 config-manager.ts 默认设置**
+- [x] **步骤 2：更新 config-manager.ts 默认设置**
 
 ```typescript
 const DEFAULT_SETTINGS: Settings = {
@@ -344,7 +344,7 @@ const DEFAULT_SETTINGS: Settings = {
 }
 ```
 
-- [ ] **步骤 3：AppContext 新增 loadTheme + setTheme（AppContext.tsx）**
+- [x] **步骤 3：AppContext 新增 loadTheme + setTheme（AppContext.tsx）**
 
 ```typescript
 // State 新增
@@ -386,7 +386,7 @@ const setTheme = useCallback(async (theme: 'warm' | 'cool' | 'light') => {
 useEffect(() => { loadSessions(); loadModels(); loadTheme() }, [loadSessions, loadModels, loadTheme])
 ```
 
-- [ ] **步骤 4：App.tsx 应用 theme class 到 `<html>`**
+- [x] **步骤 4：App.tsx 应用 theme class 到 `<html>`**
 
 ```tsx
 import { useAppContext } from './context/AppContext'
@@ -413,13 +413,13 @@ export default function App() {
 
 （需要导入 `useEffect`）
 
-- [ ] **步骤 5：编译验证**
+- [x] **步骤 5：编译验证**
 
 ```bash
 cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.node.json && npx tsc --noEmit -p tsconfig.web.json && npx electron-vite build
 ```
 
-- [ ] **步骤 6：Commit**
+- [x] **步骤 6：Commit**
 
 ```bash
 git add -A && git commit -m "feat: wire theme via Settings, apply theme class to document root on startup"
@@ -432,7 +432,7 @@ git add -A && git commit -m "feat: wire theme via Settings, apply theme class to
 **文件：**
 - 修改：`src/renderer/src/components/Sidebar.tsx`
 
-- [ ] **步骤 1：在 Sidebar 底部加入主题切换面板**
+- [x] **步骤 1：在 Sidebar 底部加入主题切换面板**
 
 ```tsx
 // Sidebar.tsx — 在 <SessionList /> 下方加入：
@@ -466,13 +466,13 @@ git add -A && git commit -m "feat: wire theme via Settings, apply theme class to
 
 需要从 `useAppContext()` 获取 `state.theme` 和 `setTheme`。
 
-- [ ] **步骤 2：编译验证**
+- [x] **步骤 2：编译验证**
 
 ```bash
 cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.web.json && npx electron-vite build
 ```
 
-- [ ] **步骤 3：Commit**
+- [x] **步骤 3：Commit**
 
 ```bash
 git add src/renderer/src/components/Sidebar.tsx && git commit -m "feat: add theme switcher with three color swatches at sidebar bottom"
@@ -482,26 +482,26 @@ git add src/renderer/src/components/Sidebar.tsx && git commit -m "feat: add them
 
 ### 任务 5：功能测试 + 文档
 
-- [ ] **步骤 1：启动应用测试三个主题**
+- [x] **步骤 1：启动应用测试三个主题**
 
 ```bash
 cd D:/project/claude/desktop && npm run dev
 ```
 
 测试清单：
-- [ ] 默认暖色主题正常显示（与之前一致）
-- [ ] 点击冷色按钮：全界面切换到紫色调暗色
-- [ ] 点击明亮按钮：全界面切换到浅色主题
-- [ ] 关闭重开：主题保持上次选择
-- [ ] 所有组件在三套主题下都无颜色异常（白底白字等）
+- [x] 默认暖色主题正常显示（与之前一致）
+- [x] 点击冷色按钮：全界面切换到紫色调暗色
+- [x] 点击明亮按钮：全界面切换到浅色主题
+- [x] 关闭重开：主题保持上次选择
+- [x] 所有组件在三套主题下都无颜色异常（白底白字等）
 
-- [ ] **步骤 2：创建测试文档**
+- [x] **步骤 2：创建测试文档**
 
 创建 `docs/tests/14-theme-switching-test.md`，记录以上 5 个检查项的结果。
 
-- [ ] **步骤 3：修复发现的问题**（如有）
+- [x] **步骤 3：修复发现的问题**（如有）
 
-- [ ] **步骤 4：最终 Commit**
+- [x] **步骤 4：最终 Commit**
 
 ```bash
 git add -A && git commit -m "test: add theme switching test document"

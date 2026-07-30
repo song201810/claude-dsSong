@@ -2,8 +2,9 @@
 import { BrowserWindow } from 'electron'
 import { execSync, spawn as spawnProc } from 'child_process'
 import { join } from 'path'
-import { existsSync } from 'fs'
-import { IPty, spawn as spawnPty } from 'node-pty'
+import { existsSync, writeFileSync } from 'fs'
+import { tmpdir } from 'os'
+import { IPty } from 'node-pty'
 import {
   type SendMessageParams,
   type ChatTokenEvent,
@@ -11,6 +12,7 @@ import {
   type ChatDoneEvent,
   IPC_CHANNELS,
 } from '../shared/types'
+import { getWhitelist, listMcpServers } from './mcp-manager'
 
 // After Fix-010 we learned that pty terminal column wrapping will hard-break
 // long JSON lines no matter how large `cols` is.  Long replies (200+ chars)
@@ -95,14 +97,14 @@ function spawnClaudeProc(args: string[], cwd: string) {
     return spawnProc('cmd.exe', ['/c', 'claude', ...escaped], {
       cwd,
       env: { ...process.env },
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['pipe', 'pipe', 'pipe'],
       windowsHide: true,
     })
   }
   return spawnProc('claude', args, {
     cwd,
     env: { ...process.env },
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['pipe', 'pipe', 'pipe'],
   })
 }
 
@@ -123,13 +125,73 @@ export function startChat(
   }
 
   // Base args shared between -p (first message) and --continue (follow-up)
-  const args = ['--model', params.model, '--output-format', 'stream-json', '--verbose']
+  const imageExts = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'])
+  // Build allowedTools from whitelist to auto-approve MCP tools
+  const whitelist = getWhitelist()
+  const args = ['--model', params.model, '--output-format', 'stream-json', '--verbose', '--permission-mode', 'bypassPermissions']
+  if (whitelist.length > 0) {
+    // NOTE: --allowedTools only needed without bypassPermissions, kept for safety
+    args.push('--allowedTools', whitelist.join(','))
+  }
+
+  // Session-level MCP filter: only enable selected MCP servers
+  if (params.enabledMcpServers !== undefined) {
+    const allServers = listMcpServers()
+    const enabledSet = new Set(params.enabledMcpServers)
+    // Only include the MCP servers user selected in the GUI
+    if (enabledSet.size > 0) {
+      const filtered = allServers.filter(s => enabledSet.has(s.name))
+      const serversConfig: Record<string, any> = {}
+      for (const s of filtered) {
+        const cfg: any = {}
+        // For HTTP-type MCPs (like weather), use url; for stdio, use command+args
+        if ((s as any).url) {
+          cfg.type = 'http'
+          cfg.url = (s as any).url
+          if ((s as any).headers) cfg.headers = (s as any).headers
+        } else {
+          cfg.command = s.command
+          if (s.args?.length) cfg.args = s.args
+          if (s.env && Object.keys(s.env).length) cfg.env = s.env
+        }
+        serversConfig[s.name] = cfg
+      }
+      const tempPath = join(tmpdir(), `claude-desktop-mcp-${params.sessionId}.json`)
+      writeFileSync(tempPath, JSON.stringify({ mcpServers: serversConfig }, null, 2))
+      args.push('--strict-mcp-config', '--mcp-config', tempPath)
+    } else {
+      // User selected 0 MCP servers — block all via empty config
+      const tempPath = join(tmpdir(), `claude-desktop-mcp-${params.sessionId}.json`)
+      writeFileSync(tempPath, JSON.stringify({ mcpServers: {} }, null, 2))
+      args.push('--strict-mcp-config', '--mcp-config', tempPath)
+    }
+  }
+
+  // Attached files: images → --image, text files → referenced in prompt
+  let promptText = params.message
+  if (params.attachedFiles && params.attachedFiles.length > 0) {
+    for (const f of params.attachedFiles) {
+      const ext = f.split('.').pop()?.toLowerCase() || ''
+      if (imageExts.has(ext)) {
+        args.push('--image', f)
+      }
+    }
+    const textFiles = params.attachedFiles.filter(f => {
+      const ext = f.split('.').pop()?.toLowerCase() || ''
+      return !imageExts.has(ext)
+    })
+    if (textFiles.length > 0) {
+      const fileRefs = textFiles.map(f => `@${f.replace(/\\/g, '/')}`).join('\n')
+      promptText = `${promptText}\n\n${fileRefs}`
+    }
+  }
+
   if (params.resume) {
     // --continue loads the last session.  Prompt is passed as the first
     // positional argument (no -p flag).
-    args.push('--continue', params.message)
+    args.push('--continue', promptText)
   } else {
-    args.push('-p', params.message)
+    args.push('-p', promptText)
   }
 
   const child = spawnClaudeProc(args, params.workDir || process.cwd())
@@ -176,6 +238,10 @@ export function startChat(
         let newText = ''
         for (const block of obj.message.content) {
           if (block.type === 'text' && block.text) newText += block.text
+          if (block.type === 'tool_use' && block.name) {
+            // MCP tool call — inject as visible text for now
+            newText += `\n\n**[MCP 工具调用]** ${block.name}\n`
+          }
         }
         if (newText.length > lastText.length) {
           const diff = newText.slice(lastText.length)

@@ -96,7 +96,7 @@ export default function SessionList() {
               sessionCount={sessions.length}
               onToggle={() => toggleGroup(group.id)}
               onRename={(name) => renameGroup(group.id, name)}
-              onDelete={() => deleteGroup(group.id)}
+              onDelete={(deleteSessions) => deleteGroup(group.id, deleteSessions)}
               onCreateSession={() => {
                 // Trigger the same modal flow but with groupId
                 // We need to access the modal — for now we open via a custom event

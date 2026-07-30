@@ -75,7 +75,7 @@ claude-code-desktop/
 - 创建：`postcss.config.js`
 - 创建：`.gitignore`
 
-- [ ] **步骤 1：创建 package.json**
+- [x] **步骤 1：创建 package.json**
 
 ```json
 {
@@ -117,7 +117,7 @@ claude-code-desktop/
 }
 ```
 
-- [ ] **步骤 2：创建 tsconfig.json**
+- [x] **步骤 2：创建 tsconfig.json**
 
 ```json
 {
@@ -129,7 +129,7 @@ claude-code-desktop/
 }
 ```
 
-- [ ] **步骤 3：创建 tsconfig.node.json**
+- [x] **步骤 3：创建 tsconfig.node.json**
 
 ```json
 {
@@ -154,7 +154,7 @@ claude-code-desktop/
 }
 ```
 
-- [ ] **步骤 4：创建 tsconfig.web.json**
+- [x] **步骤 4：创建 tsconfig.web.json**
 
 ```json
 {
@@ -179,7 +179,7 @@ claude-code-desktop/
 }
 ```
 
-- [ ] **步骤 5：创建 electron.vite.config.ts**
+- [x] **步骤 5：创建 electron.vite.config.ts**
 
 ```typescript
 import { resolve } from 'path'
@@ -214,7 +214,7 @@ export default defineConfig({
 })
 ```
 
-- [ ] **步骤 6：创建 tailwind.config.ts**
+- [x] **步骤 6：创建 tailwind.config.ts**
 
 ```typescript
 import type { Config } from 'tailwindcss'
@@ -240,7 +240,7 @@ export default {
 } satisfies Config
 ```
 
-- [ ] **步骤 7：创建 postcss.config.js**
+- [x] **步骤 7：创建 postcss.config.js**
 
 ```javascript
 export default {
@@ -250,7 +250,7 @@ export default {
 }
 ```
 
-- [ ] **步骤 8：创建 .gitignore**
+- [x] **步骤 8：创建 .gitignore**
 
 ```
 node_modules/
@@ -260,13 +260,13 @@ dist/
 *.log
 ```
 
-- [ ] **步骤 9：安装依赖**
+- [x] **步骤 9：安装依赖**
 
 ```bash
 cd D:/project/claude/desktop && npm install
 ```
 
-- [ ] **步骤 10：测试验证**
+- [x] **步骤 10：测试验证**
 
 启动项目确认编译通过：
 ```bash
@@ -274,11 +274,11 @@ cd D:/project/claude/desktop && npm run dev
 ```
 
 **测试检查项：**
-- [ ] `npm run dev` 无报错启动
-- [ ] Electron 窗口正常打开
-- [ ] 窗口标题显示 "Claude Code Desktop"
+- [x] `npm run dev` 无报错启动
+- [x] Electron 窗口正常打开
+- [x] 窗口标题显示 "Claude Code Desktop"
 
-- [ ] **步骤 11：输出测试文档**
+- [x] **步骤 11：输出测试文档**
 
 创建 `docs/tests/01-scaffold-test.md`，记录：
 - 测试内容：项目初始化、依赖安装、开发模式启动
@@ -286,7 +286,7 @@ cd D:/project/claude/desktop && npm run dev
 - 实际结果：__（填写）__
 - 是否通过：__（填写）__
 
-- [ ] **步骤 12：Commit**
+- [x] **步骤 12：Commit**
 
 ```bash
 git add -A && git commit -m "feat: init electron-vite project with react + tailwind"
@@ -299,7 +299,7 @@ git add -A && git commit -m "feat: init electron-vite project with react + tailw
 **文件：**
 - 创建：`src/shared/types.ts`
 
-- [ ] **步骤 1：创建 types.ts — IPC 通道和数据类型**
+- [x] **步骤 1：创建 types.ts — IPC 通道和数据类型**
 
 ```typescript
 // src/shared/types.ts
@@ -405,7 +405,7 @@ export interface ChatDoneEvent {
 }
 ```
 
-- [ ] **步骤 2：测试编译验证**
+- [x] **步骤 2：测试编译验证**
 
 ```bash
 cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.node.json 2>&1
@@ -413,11 +413,11 @@ cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.node.json 2>&1
 
 预期：编译无类型错误。注意 types.ts 中 `Record<string, unknown>` 在 tsconfig strict 下可以正常通过。
 
-- [ ] **步骤 3：输出测试文档**
+- [x] **步骤 3：输出测试文档**
 
 创建 `docs/tests/02-types-test.md`，记录类型编译检查结果。
 
-- [ ] **步骤 4：Commit**
+- [x] **步骤 4：Commit**
 
 ```bash
 git add src/shared/types.ts && git commit -m "feat: define shared types and IPC channels"
@@ -431,7 +431,7 @@ git add src/shared/types.ts && git commit -m "feat: define shared types and IPC 
 - 创建：`src/main/path-utils.ts`
 - 创建：`src/main/index.ts`
 
-- [ ] **步骤 1：创建 path-utils.ts**
+- [x] **步骤 1：创建 path-utils.ts**
 
 ```typescript
 // src/main/path-utils.ts
@@ -463,7 +463,7 @@ export function getSettingsPath(): string {
 }
 ```
 
-- [ ] **步骤 2：创建 main/index.ts — Electron 入口**
+- [x] **步骤 2：创建 main/index.ts — Electron 入口**
 
 ```typescript
 // src/main/index.ts
@@ -526,17 +526,17 @@ app.on('window-all-closed', () => {
 })
 ```
 
-- [ ] **步骤 3：测试编译 + 启动**
+- [x] **步骤 3：测试编译 + 启动**
 
 ```bash
 cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.node.json 2>&1
 ```
 
-- [ ] **步骤 4：输出测试文档**
+- [x] **步骤 4：输出测试文档**
 
 创建 `docs/tests/03-main-entry-test.md`，记录主进程入口和路径工具是否正常编译。
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 ```bash
 git add src/main/path-utils.ts src/main/index.ts && git commit -m "feat: add main process entry with path utils"
@@ -549,7 +549,7 @@ git add src/main/path-utils.ts src/main/index.ts && git commit -m "feat: add mai
 **文件：**
 - 创建：`src/main/session-store.ts`
 
-- [ ] **步骤 1：创建 session-store.ts**
+- [x] **步骤 1：创建 session-store.ts**
 
 ```typescript
 // src/main/session-store.ts
@@ -679,7 +679,7 @@ export async function appendMessage(
 }
 ```
 
-- [ ] **步骤 2：测试编译 + 功能验证**
+- [x] **步骤 2：测试编译 + 功能验证**
 
 TypeScript 编译检查：
 ```bash
@@ -687,15 +687,15 @@ cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.node.json 2>&1
 ```
 
 启动应用后验证：
-- [ ] 启用 `npm run dev` — 启动不报错
-- [ ] 确认 `~/.claude-code-desktop/` 目录创建成功
-- [ ] 确认 `settings.json` 自动生成
+- [x] 启用 `npm run dev` — 启动不报错
+- [x] 确认 `~/.claude-code-desktop/` 目录创建成功
+- [x] 确认 `settings.json` 自动生成
 
-- [ ] **步骤 3：输出测试文档**
+- [x] **步骤 3：输出测试文档**
 
 创建 `docs/tests/04-session-store-test.md`，记录编译和基础功能验证结果。
 
-- [ ] **步骤 4：Commit**
+- [x] **步骤 4：Commit**
 
 ```bash
 git add src/main/session-store.ts && git commit -m "feat: implement session store with JSON file persistence"
@@ -708,7 +708,7 @@ git add src/main/session-store.ts && git commit -m "feat: implement session stor
 **文件：**
 - 创建：`src/main/claude-manager.ts`
 
-- [ ] **步骤 1：创建 claude-manager.ts**
+- [x] **步骤 1：创建 claude-manager.ts**
 
 ```typescript
 // src/main/claude-manager.ts
@@ -882,7 +882,7 @@ export function isChatRunning(sessionId: string): boolean {
 }
 ```
 
-- [ ] **步骤 2：测试编译**
+- [x] **步骤 2：测试编译**
 
 ```bash
 cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.node.json 2>&1
@@ -890,11 +890,11 @@ cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.node.json 2>&1
 
 ⚠ 注意：`node-pty` 是原生模块，需在 Electron 环境中测试。此阶段仅确保编译通过。
 
-- [ ] **步骤 3：输出测试文档**
+- [x] **步骤 3：输出测试文档**
 
 创建 `docs/tests/05-claude-manager-test.md`，记录编译结果和 node-pty 集成注意事项。
 
-- [ ] **步骤 4：Commit**
+- [x] **步骤 4：Commit**
 
 ```bash
 git add src/main/claude-manager.ts && git commit -m "feat: implement Claude CLI manager with node-pty"
@@ -908,7 +908,7 @@ git add src/main/claude-manager.ts && git commit -m "feat: implement Claude CLI 
 - 创建：`src/main/config-manager.ts`
 - 创建：`src/main/ipc-handlers.ts`
 
-- [ ] **步骤 1：创建 config-manager.ts**
+- [x] **步骤 1：创建 config-manager.ts**
 
 ```typescript
 // src/main/config-manager.ts
@@ -972,7 +972,7 @@ export async function getModels(): Promise<ModelInfo[]> {
 }
 ```
 
-- [ ] **步骤 2：创建 ipc-handlers.ts**
+- [x] **步骤 2：创建 ipc-handlers.ts**
 
 ```typescript
 // src/main/ipc-handlers.ts
@@ -1037,17 +1037,17 @@ export function registerIpcHandlers(): void {
 }
 ```
 
-- [ ] **步骤 3：测试编译**
+- [x] **步骤 3：测试编译**
 
 ```bash
 cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.node.json 2>&1
 ```
 
-- [ ] **步骤 4：输出测试文档**
+- [x] **步骤 4：输出测试文档**
 
 创建 `docs/tests/06-ipc-handlers-test.md`，记录编译结果，注意此时启动会失败（缺少 renderer/preload 文件）。
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 ```bash
 git add src/main/config-manager.ts src/main/ipc-handlers.ts && git commit -m "feat: add config manager and IPC handlers"
@@ -1060,7 +1060,7 @@ git add src/main/config-manager.ts src/main/ipc-handlers.ts && git commit -m "fe
 **文件：**
 - 创建：`src/preload/index.ts`
 
-- [ ] **步骤 1：创建 preload/index.ts**
+- [x] **步骤 1：创建 preload/index.ts**
 
 ```typescript
 // src/preload/index.ts
@@ -1138,17 +1138,17 @@ contextBridge.exposeInMainWorld('api', api)
 export type ElectronApi = typeof api
 ```
 
-- [ ] **步骤 2：测试编译**
+- [x] **步骤 2：测试编译**
 
 ```bash
 cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.node.json 2>&1
 ```
 
-- [ ] **步骤 3：输出测试文档**
+- [x] **步骤 3：输出测试文档**
 
 创建 `docs/tests/07-preload-test.md`，记录 preload 脚本编译结果。
 
-- [ ] **步骤 4：Commit**
+- [x] **步骤 4：Commit**
 
 ```bash
 git add src/preload/index.ts && git commit -m "feat: implement preload script with contextBridge API"
@@ -1164,7 +1164,7 @@ git add src/preload/index.ts && git commit -m "feat: implement preload script wi
 - 创建：`src/renderer/src/context/AppContext.tsx`
 - 创建：`src/renderer/src/types.d.ts`
 
-- [ ] **步骤 1：创建 index.html**
+- [x] **步骤 1：创建 index.html**
 
 ```html
 <!DOCTYPE html>
@@ -1181,7 +1181,7 @@ git add src/preload/index.ts && git commit -m "feat: implement preload script wi
 </html>
 ```
 
-- [ ] **步骤 2：创建 types.d.ts**
+- [x] **步骤 2：创建 types.d.ts**
 
 ```typescript
 // src/renderer/src/types.d.ts
@@ -1194,7 +1194,7 @@ declare global {
 }
 ```
 
-- [ ] **步骤 3：创建 AppContext.tsx**
+- [x] **步骤 3：创建 AppContext.tsx**
 
 ```typescript
 // src/renderer/src/context/AppContext.tsx
@@ -1466,7 +1466,7 @@ export function useAppContext(): AppContextType {
 }
 ```
 
-- [ ] **步骤 4：创建 main.tsx**
+- [x] **步骤 4：创建 main.tsx**
 
 ```typescript
 // src/renderer/src/main.tsx
@@ -1485,22 +1485,22 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 )
 ```
 
-- [ ] **步骤 5：测试编译 + 启动**
+- [x] **步骤 5：测试编译 + 启动**
 
 ```bash
 cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.web.json 2>&1
 ```
 
 然后 `npm run dev` 启动验证：
-- [ ] 窗口正常显示，无白屏
-- [ ] 控制台无 React 渲染报错
-- [ ] Context Provider 正常挂载
+- [x] 窗口正常显示，无白屏
+- [x] 控制台无 React 渲染报错
+- [x] Context Provider 正常挂载
 
-- [ ] **步骤 6：输出测试文档**
+- [x] **步骤 6：输出测试文档**
 
 创建 `docs/tests/08-renderer-entry-test.md`，记录编译和启动验证结果。
 
-- [ ] **步骤 7：Commit**
+- [x] **步骤 7：Commit**
 
 ```bash
 git add src/renderer/index.html src/renderer/src/main.tsx src/renderer/src/context/AppContext.tsx src/renderer/src/types.d.ts && git commit -m "feat: add renderer entry, global state context"
@@ -1516,7 +1516,7 @@ git add src/renderer/index.html src/renderer/src/main.tsx src/renderer/src/conte
 - 创建：`src/renderer/src/components/SessionItem.tsx`
 - 创建：`src/renderer/src/components/NewSessionModal.tsx`
 
-- [ ] **步骤 1：创建 SessionItem.tsx**
+- [x] **步骤 1：创建 SessionItem.tsx**
 
 ```tsx
 // src/renderer/src/components/SessionItem.tsx
@@ -1575,7 +1575,7 @@ export default function SessionItem({ session, isActive, onSelect, onDelete }: P
 }
 ```
 
-- [ ] **步骤 2：创建 SessionList.tsx**
+- [x] **步骤 2：创建 SessionList.tsx**
 
 ```tsx
 // src/renderer/src/components/SessionList.tsx
@@ -1612,7 +1612,7 @@ export default function SessionList() {
 }
 ```
 
-- [ ] **步骤 3：创建 NewSessionModal.tsx**
+- [x] **步骤 3：创建 NewSessionModal.tsx**
 
 ```tsx
 // src/renderer/src/components/NewSessionModal.tsx
@@ -1694,7 +1694,7 @@ export default function NewSessionModal({ isOpen, onClose, onCreate }: Props) {
 }
 ```
 
-- [ ] **步骤 4：创建 Sidebar.tsx**
+- [x] **步骤 4：创建 Sidebar.tsx**
 
 ```tsx
 // src/renderer/src/components/Sidebar.tsx
@@ -1737,25 +1737,25 @@ export default function Sidebar() {
 }
 ```
 
-- [ ] **步骤 5：功能测试**
+- [x] **步骤 5：功能测试**
 
 启动 `npm run dev`：
 
 **侧边栏功能测试：**
-- [ ] 左侧边栏显示 "Claude Code" 标题
-- [ ] 点击 "+" 按钮弹出新建会话弹窗
-- [ ] 输入会话名称 → 点击创建 → 会话出现在列表
-- [ ] 空名称时创建按钮禁用
-- [ ] 按 Esc 关闭弹窗
-- [ ] 多个会话按更新时间排序
-- [ ] 悬停会话条目显示删除按钮
-- [ ] 点击删除 → 弹窗确认 → 会话移除
+- [x] 左侧边栏显示 "Claude Code" 标题
+- [x] 点击 "+" 按钮弹出新建会话弹窗
+- [x] 输入会话名称 → 点击创建 → 会话出现在列表
+- [x] 空名称时创建按钮禁用
+- [x] 按 Esc 关闭弹窗
+- [x] 多个会话按更新时间排序
+- [x] 悬停会话条目显示删除按钮
+- [x] 点击删除 → 弹窗确认 → 会话移除
 
-- [ ] **步骤 6：输出测试文档**
+- [x] **步骤 6：输出测试文档**
 
 创建 `docs/tests/09-sidebar-test.md`，将上述每个检查项逐一记录结果。
 
-- [ ] **步骤 7：Commit**
+- [x] **步骤 7：Commit**
 
 ```bash
 git add src/renderer/src/components/Sidebar.tsx src/renderer/src/components/SessionList.tsx src/renderer/src/components/SessionItem.tsx src/renderer/src/components/NewSessionModal.tsx && git commit -m "feat: implement sidebar with session list and new session modal"
@@ -1770,7 +1770,7 @@ git add src/renderer/src/components/Sidebar.tsx src/renderer/src/components/Sess
 - 创建：`src/renderer/src/components/MessageBubble.tsx`
 - 创建：`src/renderer/src/components/CodeBlock.tsx`
 
-- [ ] **步骤 1：创建 CodeBlock.tsx**
+- [x] **步骤 1：创建 CodeBlock.tsx**
 
 ```tsx
 // src/renderer/src/components/CodeBlock.tsx
@@ -1813,7 +1813,7 @@ export default function CodeBlock({ language, code }: Props) {
 }
 ```
 
-- [ ] **步骤 2：创建 MessageBubble.tsx**
+- [x] **步骤 2：创建 MessageBubble.tsx**
 
 ```tsx
 // src/renderer/src/components/MessageBubble.tsx
@@ -1891,7 +1891,7 @@ export default function MessageBubble({ message }: Props) {
 }
 ```
 
-- [ ] **步骤 3：创建 ChatView.tsx**
+- [x] **步骤 3：创建 ChatView.tsx**
 
 ```tsx
 // src/renderer/src/components/ChatView.tsx
@@ -1948,26 +1948,26 @@ export default function ChatView() {
 }
 ```
 
-- [ ] **步骤 4：功能测试**
+- [x] **步骤 4：功能测试**
 
 启动 `npm run dev`：
 
 **聊天视图功能测试：**
-- [ ] 无消息时显示空状态引导页
-- [ ] 空状态显示快捷键提示 (Enter/Shift+Enter/Esc)
-- [ ] 消息按发送顺序从上到下排列
-- [ ] 用户消息右对齐（蓝色气泡）
-- [ ] AI 消息左对齐（灰色气泡）
-- [ ] 消息自动滚动到底部
-- [ ] 代码块可点击复制按钮，复制后显示 "已复制 ✓"
-- [ ] Markdown 渲染正常（标题、列表、粗体、代码）
-- [ ] 思考过程可折叠/展开
+- [x] 无消息时显示空状态引导页
+- [x] 空状态显示快捷键提示 (Enter/Shift+Enter/Esc)
+- [x] 消息按发送顺序从上到下排列
+- [x] 用户消息右对齐（蓝色气泡）
+- [x] AI 消息左对齐（灰色气泡）
+- [x] 消息自动滚动到底部
+- [x] 代码块可点击复制按钮，复制后显示 "已复制 ✓"
+- [x] Markdown 渲染正常（标题、列表、粗体、代码）
+- [x] 思考过程可折叠/展开
 
-- [ ] **步骤 5：输出测试文档**
+- [x] **步骤 5：输出测试文档**
 
 创建 `docs/tests/10-chat-view-test.md`，将上述每个检查项逐一记录。
 
-- [ ] **步骤 6：Commit**
+- [x] **步骤 6：Commit**
 
 ```bash
 git add src/renderer/src/components/ChatView.tsx src/renderer/src/components/MessageBubble.tsx src/renderer/src/components/CodeBlock.tsx && git commit -m "feat: implement chat view with markdown, code blocks, streaming"
@@ -1981,7 +1981,7 @@ git add src/renderer/src/components/ChatView.tsx src/renderer/src/components/Mes
 - 创建：`src/renderer/src/components/InputArea.tsx`
 - 创建：`src/renderer/src/components/ModelSelect.tsx`
 
-- [ ] **步骤 1：创建 ModelSelect.tsx**
+- [x] **步骤 1：创建 ModelSelect.tsx**
 
 ```tsx
 // src/renderer/src/components/ModelSelect.tsx
@@ -2011,7 +2011,7 @@ export default function ModelSelect() {
 }
 ```
 
-- [ ] **步骤 2：创建 InputArea.tsx**
+- [x] **步骤 2：创建 InputArea.tsx**
 
 ```tsx
 // src/renderer/src/components/InputArea.tsx
@@ -2101,29 +2101,29 @@ export default function InputArea() {
 }
 ```
 
-- [ ] **步骤 3：功能测试**
+- [x] **步骤 3：功能测试**
 
 启动 `npm run dev`：
 
 **输入区域功能测试：**
-- [ ] 未选中会话时不显示输入区
-- [ ] 选中会话后输入区正常显示
-- [ ] 空输入时发送按钮禁用
-- [ ] Enter 键发送消息
-- [ ] Shift+Enter 换行
-- [ ] 多行输入时 textarea 自动增高
+- [x] 未选中会话时不显示输入区
+- [x] 选中会话后输入区正常显示
+- [x] 空输入时发送按钮禁用
+- [x] Enter 键发送消息
+- [x] Shift+Enter 换行
+- [x] 多行输入时 textarea 自动增高
 
 **模型切换功能测试：**
-- [ ] 模型下拉列表显示 4 个模型
-- [ ] 默认选中 Sonnet 4.6
-- [ ] 切换到其他模型 → 下拉值更新
-- [ ] 模型参数在底部栏正确显示
+- [x] 模型下拉列表显示 4 个模型
+- [x] 默认选中 Sonnet 4.6
+- [x] 切换到其他模型 → 下拉值更新
+- [x] 模型参数在底部栏正确显示
 
-- [ ] **步骤 4：输出测试文档**
+- [x] **步骤 4：输出测试文档**
 
 创建 `docs/tests/11-input-model-test.md`，将上述每项逐一记录。
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 ```bash
 git add src/renderer/src/components/InputArea.tsx src/renderer/src/components/ModelSelect.tsx && git commit -m "feat: implement input area with model selector"
@@ -2137,7 +2137,7 @@ git add src/renderer/src/components/InputArea.tsx src/renderer/src/components/Mo
 - 创建：`src/renderer/src/App.tsx`
 - 创建：`src/renderer/src/styles/index.css`
 
-- [ ] **步骤 1：创建 index.css**
+- [x] **步骤 1：创建 index.css**
 
 ```css
 /* Tailwind CSS 4 */
@@ -2171,7 +2171,7 @@ html, body, #root {
 }
 ```
 
-- [ ] **步骤 2：创建 App.tsx**
+- [x] **步骤 2：创建 App.tsx**
 
 ```tsx
 // src/renderer/src/App.tsx
@@ -2193,7 +2193,7 @@ export default function App() {
 }
 ```
 
-- [ ] **步骤 3：集成功能测试**
+- [x] **步骤 3：集成功能测试**
 
 启动 `npm run dev`：
 
@@ -2206,16 +2206,16 @@ export default function App() {
 | 3 | 会话切换 | 创建多个会话 → 点击侧栏切换 | 聊天区切换为对应会话的消息历史 |
 
 **边界场景：**
-- [ ] 快速连续发送多条消息（队列处理）
-- [ ] 在 AI 回复中切换会话（不影响当前生成）
-- [ ] 删除当前选中会话（UI 正确回退）
-- [ ] 粘贴长文本输入
+- [x] 快速连续发送多条消息（队列处理）
+- [x] 在 AI 回复中切换会话（不影响当前生成）
+- [x] 删除当前选中会话（UI 正确回退）
+- [x] 粘贴长文本输入
 
-- [ ] **步骤 4：输出测试文档**
+- [x] **步骤 4：输出测试文档**
 
 创建 `docs/tests/12-integration-test.md`，记录完整的端到端测试结果。
 
-- [ ] **步骤 5：Commit**
+- [x] **步骤 5：Commit**
 
 ```bash
 git add src/renderer/src/App.tsx src/renderer/src/styles/index.css && git commit -m "feat: wire up App layout with sidebar, chat view, and input area"
@@ -2225,7 +2225,7 @@ git add src/renderer/src/App.tsx src/renderer/src/styles/index.css && git commit
 
 ### 任务 13：最终验证与修复
 
-- [ ] **步骤 1：检查 TypeScript 编译**
+- [x] **步骤 1：检查 TypeScript 编译**
 
 ```bash
 cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.node.json 2>&1 && npx tsc --noEmit -p tsconfig.web.json 2>&1
@@ -2233,25 +2233,25 @@ cd D:/project/claude/desktop && npx tsc --noEmit -p tsconfig.node.json 2>&1 && n
 
 预期：两个 tsconfig 都无类型错误。
 
-- [ ] **步骤 2：启动开发模式验证**
+- [x] **步骤 2：启动开发模式验证**
 
 ```bash
 cd D:/project/claude/desktop && npm run dev
 ```
 
-- [ ] **步骤 3：完整回归测试**
+- [x] **步骤 3：完整回归测试**
 
 按任务 12 的功能回归表格逐项验证，确保三个核心功能全部通过。
 
-- [ ] **步骤 4：修复发现的问题**
+- [x] **步骤 4：修复发现的问题**
 
 修复所有不通过的功能点，修复后重新测试确认。
 
-- [ ] **步骤 5：输出最终测试汇总**
+- [x] **步骤 5：输出最终测试汇总**
 
 创建 `docs/tests/13-summary-test.md`，汇总任务 1-12 的所有测试文档路径和通过情况。
 
-- [ ] **步骤 6：最终 Commit**
+- [x] **步骤 6：最终 Commit**
 
 ```bash
 git add -A && git commit -m "fix: final verification fixes"

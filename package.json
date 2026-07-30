@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "preview": "electron-vite preview"
+    "preview": "electron-vite preview",
+    "pack": "electron-vite build && electron-builder --dir",
+    "dist": "electron-vite build && electron-builder",
+    "dist:win": "electron-vite build && electron-builder --win",
+    "dist:mac": "electron-vite build && electron-builder --mac",
+    "dist:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {
     "lucide-react": "^1.27.0",
@@ -26,6 +31,7 @@
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^34.0.0",
+    "electron-builder": "^25.0.0",
     "electron-vite": "^2.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -33,5 +39,50 @@
     "react-syntax-highlighter": "^15.6.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0"
+  },
+  "build": {
+    "appId": "com.claude-code-desktop.app",
+    "productName": "Claude Code Desktop",
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Development"
+    }
   }
 }

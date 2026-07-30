@@ -1,9 +1,12 @@
 node_modules/
 out/
 dist/
+release/
 .DS_Store
 *.log
 .env
 .env.local
 .env.*.local
 *.tsbuildinfo
+*.exe
+start.bat

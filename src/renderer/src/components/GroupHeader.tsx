@@ -9,7 +9,7 @@ interface Props {
   sessionCount: number
   onToggle: () => void
   onRename: (newName: string) => void
-  onDelete: () => void
+  onDelete: (deleteSessions?: boolean) => void
   onCreateSession: () => void
 }
 
@@ -77,9 +77,9 @@ export default function GroupHeader({
     setConfirmDelete(true)
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = (deleteSessions: boolean) => {
     setConfirmDelete(false)
-    onDelete()
+    onDelete(deleteSessions)
   }
 
   return (
@@ -185,32 +185,55 @@ export default function GroupHeader({
         </div>
       )}
 
-      {/* Inline delete confirmation — replaces window.confirm() */}
+      {/* Inline delete confirmation — two options */}
       {confirmDelete && (
-        <div className="group-dropdown-menu fixed z-[100] min-w-[240px]
-                        bg-[var(--bg-side)] border border-[var(--border)] rounded-lg shadow-xl p-3"
-          style={{ left: menuPos.left, top: menuPos.top }}
+        <div className="group-dropdown-menu fixed z-[100] min-w-[280px]
+                        bg-[var(--bg-side)] border border-[var(--border)] rounded-lg shadow-xl p-4"
+          style={{ left: Math.min(menuPos.left, window.innerWidth - 300), top: menuPos.top }}
           onClick={(e) => e.stopPropagation()}
         >
-          <p className="text-[13px] text-[var(--fg-primary)] mb-2">
-            确定删除分组「{group.name}」？会话将保留但取消分组。
+          <p className="text-[13px] text-[var(--fg-primary)] mb-3">
+            删除分组「{group.name}」？
           </p>
-          <div className="flex justify-end gap-2">
-            <button
-              className="px-3 py-1 text-[12px] rounded-md bg-[var(--bg-card)] hover:bg-[var(--bg-input)]
-                         text-[var(--fg-muted)] transition-colors"
-              onClick={() => setConfirmDelete(false)}
-            >
-              取消
-            </button>
-            <button
-              className="px-3 py-1 text-[12px] rounded-md bg-[var(--accent)] hover:bg-[var(--accent-hover)]
-                         text-white font-medium transition-colors"
-              onClick={handleConfirmDelete}
-            >
-              删除
-            </button>
-          </div>
+
+          {/* Option 1: Release sessions to ungrouped */}
+          <button
+            className="w-full text-left px-3 py-2 rounded-md mb-2
+                       bg-[var(--bg-card)] hover:bg-[var(--bg-input)] transition-colors
+                       border border-[var(--border)]"
+            onClick={() => handleConfirmDelete(false)}
+          >
+            <span className="text-[13px] font-medium text-[var(--fg-primary)] block">
+              保留会话，取消分组
+            </span>
+            <span className="text-[11px] text-[var(--fg-dim)] block mt-0.5">
+              {sessionCount > 0 ? `将 ${sessionCount} 个会话移至未分组` : '组内无会话'}
+            </span>
+          </button>
+
+          {/* Option 2: Delete everything */}
+          <button
+            className="w-full text-left px-3 py-2 rounded-md
+                       bg-[var(--error-bg)] hover:bg-[var(--error-bg)]/80 transition-colors
+                       border border-[var(--error-border)]"
+            onClick={() => handleConfirmDelete(true)}
+          >
+            <span className="text-[13px] font-medium text-[var(--error-text)] block">
+              同时删除组内所有会话
+            </span>
+            <span className="text-[11px] text-[var(--error-text)]/70 block mt-0.5">
+              {sessionCount > 0 ? `将永久删除 ${sessionCount} 个会话及其消息` : '组内无会话'}
+            </span>
+          </button>
+
+          <button
+            className="w-full mt-2 px-3 py-1.5 text-[12px] rounded-md
+                       text-[var(--fg-muted)] hover:text-[var(--fg-primary)] hover:bg-[var(--bg-hover)]
+                       transition-colors text-center"
+            onClick={() => setConfirmDelete(false)}
+          >
+            取消
+          </button>
         </div>
       )}
     </>

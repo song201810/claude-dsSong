@@ -32,6 +32,16 @@ export const IPC_CHANNELS = {
   // 应用
   APP_GET_INFO: 'app:get-info',
   APP_SELECT_DIRECTORY: 'app:select-directory',
+  APP_SELECT_FILES: 'app:select-files',
+  APP_LIST_FILES: 'app:list-files',
+
+  // MCP 管理
+  MCP_LIST: 'mcp:list',
+  MCP_ADD: 'mcp:add',
+  MCP_UPDATE: 'mcp:update',
+  MCP_DELETE: 'mcp:delete',
+  MCP_WHITELIST_GET: 'mcp:whitelist:get',
+  MCP_WHITELIST_SET: 'mcp:whitelist:set',
 } as const
 
 // ============ 数据类型 ============
@@ -100,6 +110,8 @@ export interface SendMessageParams {
   assistantMessageId?: string
   workDir?: string
   resume?: boolean  // --resume: continue previous conversation in same session
+  attachedFiles?: string[]  // local file paths to attach
+  enabledMcpServers?: string[]  // MCP server names enabled for this message
 }
 
 export interface ChatTokenEvent {
@@ -119,4 +131,20 @@ export interface ChatDoneEvent {
   sessionId: string
   messageId: string
   fullContent: string
+}
+
+export interface FileNode {
+  name: string
+  path: string
+  isDir: boolean
+}
+
+export interface McpServerConfig {
+  name: string
+  command: string
+  args: string[]
+  env: Record<string, string>
+  type?: 'stdio' | 'http'
+  url?: string
+  headers?: Record<string, string>
 }

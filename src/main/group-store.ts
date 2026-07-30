@@ -3,8 +3,9 @@ import { readFile, writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { v4 as uuidv4 } from 'uuid'
 import type { SessionGroup } from '../shared/types'
-import { getGroupsPath, getSessionMetadataPath } from './path-utils'
+import { getGroupsPath, getSessionMetadataPath, getSessionDir } from './path-utils'
 import type { SessionSummary } from '../shared/types'
+import { rm } from 'fs/promises'
 
 interface GroupStoreFile {
   version: 1
@@ -56,14 +57,24 @@ export async function createGroup(name: string): Promise<SessionGroup> {
   return group
 }
 
-export async function deleteGroup(id: string): Promise<void> {
+export async function deleteGroup(id: string, deleteSessions: boolean = false): Promise<void> {
   const store = await readStore()
   const group = store.groups.find(g => g.id === id)
   if (!group) return
 
-  // Clear groupId from all sessions in this group
-  for (const sid of group.sessionIds) {
-    await updateSessionGroupId(sid, undefined)
+  if (deleteSessions) {
+    // Delete all sessions in the group entirely
+    for (const sid of group.sessionIds) {
+      const dir = getSessionDir(sid)
+      if (existsSync(dir)) {
+        await rm(dir, { recursive: true, force: true })
+      }
+    }
+  } else {
+    // Keep sessions but ungroup them — clear groupId from meta.json
+    for (const sid of group.sessionIds) {
+      await updateSessionGroupId(sid, undefined)
+    }
   }
 
   store.groups = store.groups.filter(g => g.id !== id)

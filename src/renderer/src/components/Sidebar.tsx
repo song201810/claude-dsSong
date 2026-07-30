@@ -1,12 +1,14 @@
 // src/renderer/src/components/Sidebar.tsx
 import React, { useState, useEffect, useCallback } from 'react'
-import { Plus, FolderPlus } from 'lucide-react'
+import { Plus, FolderPlus, Settings } from 'lucide-react'
 import SessionList from './SessionList'
+import SettingsModal from './SettingsModal'
 import NewSessionModal from './NewSessionModal'
 import { useAppContext } from '../context/AppContext'
 
 export default function Sidebar() {
   const [showModal, setShowModal] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [pendingGroupId, setPendingGroupId] = useState<string | undefined>()
   const [isCreatingGroup, setIsCreatingGroup] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
@@ -110,6 +112,17 @@ export default function Sidebar() {
 
         <SessionList />
         <div className="mt-auto border-t border-[var(--border)] px-4 py-3">
+          {/* Settings button */}
+          <button
+            className="w-full flex items-center gap-2 px-2 py-1.5 mb-2 rounded-lg
+                       text-[var(--fg-muted)] hover:text-[var(--fg-primary)] hover:bg-[var(--bg-hover)]
+                       transition-colors text-[12px] focus:outline-none"
+            onClick={() => setShowSettings(true)}
+          >
+            <Settings size={14} />
+            <span>设置</span>
+          </button>
+
           <span className="text-xs text-[var(--fg-dim)]">主题</span>
           <div className="flex gap-2 mt-2">
             <div className="flex flex-col items-center gap-1">
@@ -155,6 +168,10 @@ export default function Sidebar() {
         onCreate={handleCreateSession}
         groupId={pendingGroupId}
       />
+
+      {showSettings && (
+        <SettingsModal onClose={() => setShowSettings(false)} />
+      )}
     </>
   )
 }

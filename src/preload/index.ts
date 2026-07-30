@@ -39,8 +39,8 @@ const api = {
   createGroup: (name: string): Promise<SessionGroup> =>
     ipcRenderer.invoke(IPC_CHANNELS.GROUP_CREATE, name),
 
-  deleteGroup: (id: string): Promise<void> =>
-    ipcRenderer.invoke(IPC_CHANNELS.GROUP_DELETE, id),
+  deleteGroup: (id: string, deleteSessions?: boolean): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.GROUP_DELETE, id, deleteSessions),
 
   renameGroup: (id: string, name: string): Promise<SessionGroup | null> =>
     ipcRenderer.invoke(IPC_CHANNELS.GROUP_RENAME, id, name),
@@ -92,6 +92,31 @@ const api = {
 
   selectDirectory: (): Promise<string | null> =>
     ipcRenderer.invoke(IPC_CHANNELS.APP_SELECT_DIRECTORY),
+
+  selectFiles: (workDir: string): Promise<string[] | null> =>
+    ipcRenderer.invoke(IPC_CHANNELS.APP_SELECT_FILES, workDir),
+
+  listFiles: (workDir: string): Promise<import('../shared/types').FileNode[]> =>
+    ipcRenderer.invoke(IPC_CHANNELS.APP_LIST_FILES, workDir),
+
+  // === MCP ===
+  listMcpServers: (): Promise<import('../shared/types').McpServerConfig[]> =>
+    ipcRenderer.invoke(IPC_CHANNELS.MCP_LIST),
+
+  addMcpServer: (server: import('../shared/types').McpServerConfig): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.MCP_ADD, server),
+
+  updateMcpServer: (name: string, server: import('../shared/types').McpServerConfig): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.MCP_UPDATE, name, server),
+
+  deleteMcpServer: (name: string): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.MCP_DELETE, name),
+
+  getWhitelist: (): Promise<string[]> =>
+    ipcRenderer.invoke(IPC_CHANNELS.MCP_WHITELIST_GET),
+
+  setWhitelist: (list: string[]): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.MCP_WHITELIST_SET, list),
 }
 
 contextBridge.exposeInMainWorld('api', api)

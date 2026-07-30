@@ -1,5 +1,5 @@
 // src/renderer/src/context/AppContext.tsx
-import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react'
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef, useState } from 'react'
 import type { SessionSummary, Message, ModelInfo, SessionGroup } from '../../../shared/types'
 
 // ============ State ============
@@ -15,6 +15,8 @@ interface AppState {
   error: string | null
   theme: 'warm' | 'cool' | 'light'
   groups: SessionGroup[]
+  attachedFiles: string[]
+  enabledMcp: string[]
 }
 
 const initialState: AppState = {
@@ -29,6 +31,8 @@ const initialState: AppState = {
   error: null,
   theme: 'warm',
   groups: [],
+  attachedFiles: [],
+  enabledMcp: [],
 }
 
 // ============ Actions ============
@@ -50,6 +54,10 @@ type Action =
   | { type: 'ADD_GROUP'; payload: SessionGroup }
   | { type: 'REMOVE_GROUP'; payload: string }
   | { type: 'UPDATE_GROUP'; payload: SessionGroup }
+  | { type: 'SET_ATTACHED_FILES'; payload: string[] }
+  | { type: 'ADD_ATTACHED_FILES'; payload: string[] }
+  | { type: 'REMOVE_ATTACHED_FILE'; payload: string }
+  | { type: 'SET_ENABLED_MCP'; payload: string[] }
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -117,6 +125,14 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         groups: state.groups.map(g => g.id === action.payload.id ? action.payload : g),
       }
+    case 'SET_ATTACHED_FILES':
+      return { ...state, attachedFiles: action.payload }
+    case 'ADD_ATTACHED_FILES':
+      return { ...state, attachedFiles: [...state.attachedFiles, ...action.payload] }
+    case 'REMOVE_ATTACHED_FILE':
+      return { ...state, attachedFiles: state.attachedFiles.filter(f => f !== action.payload) }
+    case 'SET_ENABLED_MCP':
+      return { ...state, enabledMcp: action.payload }
     default:
       return state
   }
@@ -137,9 +153,13 @@ interface AppContextType {
   loadTheme: () => Promise<void>
   loadGroups: () => Promise<void>
   createGroup: (name: string) => Promise<void>
-  deleteGroup: (id: string) => Promise<void>
+  deleteGroup: (id: string, deleteSessions?: boolean) => Promise<void>
   renameGroup: (id: string, name: string) => Promise<void>
   moveSessionToGroup: (sessionId: string, groupId: string | null) => Promise<void>
+  addAttachedFiles: (files: string[]) => void
+  removeAttachedFile: (file: string) => void
+  enabledMcp: string[]
+  setEnabledMcp: (names: string[]) => void
 }
 
 const AppContext = createContext<AppContextType | null>(null)
@@ -215,9 +235,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       sessionId: cur.currentSessionId, message: content, model: cur.currentModel,
       assistantMessageId: assistantId,
       workDir: cur.sessions.find(s => s.id === cur.currentSessionId)?.workDir,
-      resume: cur.messages.length > 0,  // --resume if this session already has messages
+      resume: cur.messages.length > 0,
+      attachedFiles: cur.attachedFiles.length > 0 ? cur.attachedFiles : undefined,
+      enabledMcpServers: cur.enabledMcp,
     })
-  }, [])  // no stale deps — uses stateRef
+
+    // Clear attached files after sending
+    if (cur.attachedFiles.length > 0) {
+      dispatch({ type: 'SET_ATTACHED_FILES', payload: [] })
+    }
+  }, [])
 
   const cancelMessage = useCallback(() => {
     const cur = stateRef.current
@@ -244,8 +271,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'ADD_GROUP', payload: group })
   }, [])
 
-  const deleteGroup = useCallback(async (id: string) => {
-    await window.api.deleteGroup(id)
+  const deleteGroup = useCallback(async (id: string, deleteSessions?: boolean) => {
+    await window.api.deleteGroup(id, deleteSessions)
     dispatch({ type: 'REMOVE_GROUP', payload: id })
     await loadSessions()
   }, [loadSessions])
@@ -266,6 +293,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await loadSessions()
     await loadGroups()
   }, [loadSessions, loadGroups])
+
+  const addAttachedFiles = useCallback((files: string[]) => {
+    dispatch({ type: 'ADD_ATTACHED_FILES', payload: files })
+  }, [])
+
+  const removeAttachedFile = useCallback((file: string) => {
+    dispatch({ type: 'REMOVE_ATTACHED_FILE', payload: file })
+  }, [])
+
+  const [enabledMcp, setEnabledMcp] = useState<string[]>([])
+
+  const setEnabledMcpWithState = useCallback((names: string[]) => {
+    setEnabledMcp(names)
+    dispatch({ type: 'SET_ENABLED_MCP', payload: names })
+  }, [])
+
+  // Load MCP servers on mount
+  useEffect(() => {
+    window.api.listMcpServers().then(() => {}).catch(() => {})
+  }, [])
 
   // --- IPC listeners (registered once, uses stateRef to avoid stale closures) ---
   useEffect(() => {
@@ -307,6 +354,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         sendMessage, cancelMessage, loadModels,
         setTheme, loadTheme,
         loadGroups, createGroup, deleteGroup, renameGroup, moveSessionToGroup,
+        addAttachedFiles, removeAttachedFile,
+        enabledMcp, setEnabledMcp: setEnabledMcpWithState,
       }}
     >
       {children}
