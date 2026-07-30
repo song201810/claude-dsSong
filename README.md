@@ -5,7 +5,7 @@
 
 ## 截图
 
-> ![image-20260730213817999](C:\Users\song1\AppData\Roaming\Typora\typora-user-images\image-20260730213817999.png)
+> ![界面预览](./assets/Snipaste_2026-07-30_21-40-51.png)
 
 ## 功能
 
