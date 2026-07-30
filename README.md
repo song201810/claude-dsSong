@@ -5,7 +5,7 @@
 
 ## 截图
 
-> TODO: 添加应用截图
+> ![image-20260730213817999](C:\Users\song1\AppData\Roaming\Typora\typora-user-images\image-20260730213817999.png)
 
 ## 功能
 
