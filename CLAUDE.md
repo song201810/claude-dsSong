@@ -96,4 +96,4 @@ src/
 
 - **禁止重复构建验证**：修改代码后只跑一次 `npx tsc --noEmit` + `npx electron-vite build` 确认编译通过。如果 git status 无变化且上次构建已通过，不要再重复构建。不要在无新增改动的情况下多次 commit "chore" "noop" 等空提交
 - **禁止死循环**：当一个操作连续执行多次且结果完全相同时（如连续 build 结果一致、连续 git status 显示 clean），立即停止，问用户下一步做什么
-- **变更完成后直接 commit**：一次改动 → 一次构建 → 一次 commit。不要拆成多个小 commit 反复跑
+- **变更完成后不要 commit**：一次改动 → 一次构建，不需要 git commit
